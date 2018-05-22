@@ -24,12 +24,15 @@ object RunClassifier {
 
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
-    val trainingMatrix = buildMatrix(trainingData, wordIndex.wordOrdering)
-    val validationMatrix = buildMatrix(validationData, wordIndex.wordOrdering)
-    val testingMatrix = buildMatrix(testingData, wordIndex.wordOrdering)
+    val trainingMatrix = buildMatrix(trainingData, wordIndex)
+    val validationMatrix = buildMatrix(validationData, wordIndex)
+    val testingMatrix = buildMatrix(testingData, wordIndex)
 
     println(trainingMatrix.length, trainingMatrix.head.length)
     println(validationMatrix.length, validationMatrix.head.length)
     println(testingMatrix.length, testingMatrix.head.length)
+
+    val idfVector = calcIDF(trainingMatrix)
+    println(idfVector.length)
   }
 }
