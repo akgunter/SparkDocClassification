@@ -1,0 +1,23 @@
+$10 1
+<jac2y> 1
+cook 1
+from 1
+jac2y@virginiaedu 1
+jazz 1
+jon 1
+jonathan 1
+line 1
+more 1
+offer 1
+organization 1
+point 1
+really 1
+saletrade 1
+sell 1
+subject 1
+than 1
+thank 1
+this 1
+university 1
+virginia 1
+

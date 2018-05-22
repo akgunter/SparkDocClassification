@@ -1,0 +1,24 @@
+brian 1
+college 1
+don't 1
+from 1
+has 1
+know 1
+like 1
+line 1
+look 1
+ma_ind25@blurtoswegoedu 1
+organization 1
+oswego 2
+phil 1
+plantier 1
+rosen 1
+sitting 1
+stance 2
+subject 1
+suny 1
+tbo 1
+think 1
+toilet 1
+ugliest 2
+

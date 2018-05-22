@@ -1,0 +1,24 @@
+available 1
+cd'ing 1
+chicago 1
+cscrjn@hawkdepauledu 1
+depaul 1
+experimental 1
+from 1
+hawkdepauledu 1
+line 1
+nerheim 1
+nntp-posting-host 1
+online 1
+organization 1
+publication 1
+publicationsmay_93_online 1
+rosalee 1
+rosalie 1
+siggraph 1
+siggraphorg 1
+subject 1
+there 1
+try 1
+university 1
+

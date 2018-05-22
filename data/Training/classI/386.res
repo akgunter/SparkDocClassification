@@ -1,0 +1,24 @@
+copy 1
+dna@ucsusledu 1
+from 1
+hebert 1
+i'm 1
+know 1
+lafayette 1
+let 1
+line 1
+marc 2
+mih8447@ucsusledu 1
+need 1
+needed 1
+organization 1
+output 1
+please 1
+program 1
+southwestern 1
+subject 1
+this 1
+univ 1
+videotaped 2
+you 1
+

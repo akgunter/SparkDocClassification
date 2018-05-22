@@ -1,0 +1,23 @@
+all 1
+canada 1
+cs902060@arielyorkuca 1
+dias 1
+doe 1
+from 1
+geoffrey 1
+get 1
+how 1
+line 2
+making 1
+organization 1
+pitcher 2
+qualify 1
+rule 1
+save 2
+say 1
+subject 2
+toronto 1
+university 1
+what 1
+york 1
+

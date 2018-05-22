@@ -1,0 +1,27 @@
+about 1
+any 1
+anyone 1
+article 1
+article-id 1
+configured 1
+detail 1
+file 2
+from 1
+know 1
+krejcik 1
+line 2
+mac 2
+more 2
+new 1
+once 1
+optimally 1
+organization 1
+patrick 1
+pkr@slacvmslacstanfordedu 1
+pkrmacpkr-050493101102 1
+saw 1
+server 2
+slac 1
+subject 1
+work 1
+

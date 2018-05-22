@@ -1,0 +1,26 @@
+<1993apr152144211@acaddrakeedu> 1
+allegheny 1
+article 1
+baseball 1
+college 1
+during 1
+from 1
+jewish 2
+league 1
+liberalizer 1
+lurie 1
+luriem@allegedumichael 1
+nobody 1
+now 1
+organization 1
+player 1
+practically 1
+reading 1
+remember 1
+sbp002@acaddrakeedu 1
+somewhere 1
+subject 1
+there 1
+was 1
+write 1
+

@@ -1,0 +1,26 @@
+$25 2
+2400 1
+baud 1
+box 1
+dennis 2
+distribution 1
+durham 1
+dwf@keplerunhedu 1
+external 1
+fitanide 1
+from 1
+hampshire 1
+keplerunhedu 1
+line 1
+manual 1
+mint 1
+modem 1
+new 1
+nntp-posting-host 1
+organization 1
+phonecord 1
+shipping 1
+subject 1
+university 1
+usa 1
+

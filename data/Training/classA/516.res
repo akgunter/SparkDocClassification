@@ -1,0 +1,25 @@
+$300 2
+***** 2
+---------------- 1
+andie 1
+awlin@eaglewesleyanedu 2
+cpu 2
+forsale 1
+from 1
+i486dx-33 2
+immediately 1
+intel 2
+lin 1
+line 1
+must 1
+nntp-posting-host 1
+organization 1
+price 1
+sell 1
+shipping 1
+subject 1
+university 1
+wei-ku 1
+wesleyan 1
+wesleyanedu 1
+

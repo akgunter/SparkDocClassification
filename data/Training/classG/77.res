@@ -1,0 +1,21 @@
+anemic 1
+carrd@iccgccdecnetabcom 1
+david 2
+from 1
+grab 1
+guy 1
+has 1
+i'd 1
+landed 1
+line 1
+pitching 1
+pronto 1
+subject 1
+team 1
+their 1
+think 1
+this 1
+tiger 1
+well 2
+yet 1
+

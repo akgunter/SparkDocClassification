@@ -1,0 +1,23 @@
+144mb 1
+all 1
+australia 1
+email 1
+from 1
+goh 1
+line 1
+nntp-posting-host 1
+organization 1
+pl5 1
+please 1
+say 1
+shaw 1
+skcgoh@tartarusuwaeduau 2
+soon 1
+subject 2
+tartarusuwaeduau 1
+tin 1
+university 1
+wanted 1
+western 1
+x-newsreader 1
+

@@ -1,0 +1,22 @@
+'spo 1
+arizona 1
+biotechnology 1
+doug 2
+from 1
+game 1
+hill 1
+joplinbiosciarizonaedu 1
+ken 1
+keyword 1
+length 1
+let 1
+line 1
+mvp 1
+nntp-posting-host 1
+organization 1
+r4938585@joplinbiosciarizonaedu 1
+robert 2
+subject 1
+tucson 1
+university 1
+

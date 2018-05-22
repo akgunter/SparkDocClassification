@@ -1,0 +1,21 @@
+any 1
+card 2
+dell 2
+doe 1
+eisa 2
+florida 1
+from 1
+gatornet 1
+lake 1
+larry 2
+larry@gatorrncom 2
+line 1
+mary 1
+organization 1
+snyder 2
+subject 1
+support 1
+under 1
+video 2
+xfree86 1
+

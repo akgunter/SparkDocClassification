@@ -1,0 +1,24 @@
+camosun 1
+canada 2
+championship 1
+college 1
+forsberg 1
+forsrg 1
+freenetvictoriabcca 1
+from 1
+give 1
+line 1
+mail 1
+moffat 2
+nntp-posting-host 1
+organization 1
+pwter 1
+sao 1
+some 2
+stat 1
+subject 1
+tom 2
+ua256@freenetvictoriabcca 2
+victoria 2
+world 1
+

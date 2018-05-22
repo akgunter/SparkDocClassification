@@ -1,0 +1,26 @@
+[1927022578] 1
+achive 1
+danny 1
+dat 1
+distribution 1
+dlunt@segoviact_exploit 2
+from 1
+ftp 1
+inc 1
+line 1
+lunt 1
+microsystem 1
+nntp-posting-host 1
+organization 1
+pubmapdem 1
+reply-to 1
+segoviasimescom 1
+spectrumxeroxcom 1
+subject 1
+sun 1
+terrain 1
+there 1
+try 1
+usgs 1
+world 1
+

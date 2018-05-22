@@ -1,0 +1,23 @@
+1-800-832-4778 2
+actual 1
+computer 1
+cscon101@uoft02utoledoedu 1
+digital 2
+drive 1
+end 1
+from 1
+get 1
+information 1
+line 1
+mail 1
+many 1
+organization 1
+person 1
+reply 1
+service 1
+subject 1
+toledo 1
+university 1
+voice 1
+western 2
+

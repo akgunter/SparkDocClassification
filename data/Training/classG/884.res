@@ -1,0 +1,22 @@
+acaddrakeedu 1
+anyone 1
+arocha 1
+des 1
+doe 1
+drake 1
+from 1
+iowa 1
+jeffry 1
+know 1
+line 1
+moine 1
+nntp-posting-host 1
+organization 1
+redbird 1
+sbp002@acaddrakeedu 1
+statu 1
+subject 1
+university 1
+usa 1
+wounded 1
+

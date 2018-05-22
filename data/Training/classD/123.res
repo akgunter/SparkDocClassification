@@ -1,0 +1,21 @@
+9000700 1
+bell-northern 1
+from 1
+get 2
+jlong@brtph368bnrca 2
+john 2
+line 1
+long 2
+ltd 1
+need 1
+organization 1
+p205 2
+rather 1
+reply-to 1
+research 1
+source 3
+subject 1
+where 1
+will 1
+xman 3
+

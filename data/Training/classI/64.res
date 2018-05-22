@@ -1,0 +1,21 @@
+amd 2
+any 1
+bad 1
+comment 1
+cpu 1
+cunning@mksoldsegticom 1
+cunningham 1
+from 1
+good 1
+instrument 1
+line 1
+localhost 1
+microprocessor 1
+nntp-posting-host 1
+organization 1
+pat 1
+patrick 1
+subject 1
+texa 1
+thank 1
+

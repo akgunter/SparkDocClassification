@@ -1,0 +1,26 @@
+access 1
+accessdigexnet 1
+anyone 1
+communication 1
+distribution 1
+doe 1
+erickson 2
+express 1
+from 1
+going 1
+greenbelt 1
+how 1
+line 1
+long 1
+nntp-posting-host 1
+online 1
+organization 1
+out 1
+random 1
+random@accessdigexcom 1
+scoop 1
+scot 1
+scott 1
+subject 1
+usa 2
+

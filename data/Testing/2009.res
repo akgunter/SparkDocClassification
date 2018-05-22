@@ -1,0 +1,38 @@
+about 1
+across 1
+api 1
+because 1
+came 1
+detail 1
+didn't 1
+difficult 1
+even 1
+from 1
+function 1
+further 1
+good 2
+googled 1
+i'm 1
+it 1
+know 1
+learn 1
+like 1
+look 1
+looked 1
+lot 1
+message 1
+moment 1
+now 1
+read 1
+reference 2
+site 1
+stand 1
+such 1
+tronchecom 1
+understand 1
+using 1
+window 1
+windowmanager 1
+wm_delete_window 1
+you 1
+

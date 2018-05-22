@@ -1,0 +1,21 @@
+70-210 2
+college 1
+condition 1
+dang 1
+dartmouth 1
+detail 1
+e-mail 1
+excellent 1
+from 1
+hanover 1
+immediate 1
+line 1
+nikkor 2
+organization 1
+rupin 1
+rupindang@dartmouthedu 1
+sale 1
+sale$175 1
+send 1
+subject 1
+

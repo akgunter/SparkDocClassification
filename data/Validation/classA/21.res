@@ -1,0 +1,21 @@
+30332 1
+anthony 2
+atl 1
+atlanta 1
+computer 1
+distribution 1
+from 1
+georgia 3
+gt4661a 2
+gt4661a@prismgatechedu 2
+institute 2
+internet 1
+line 1
+organization 1
+paolomarc 2
+sale 1
+subject 1
+technology 2
+uucp 1
+{allegraamdhplabsut-ngp}gatechprismgt4661a 1
+

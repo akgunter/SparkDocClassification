@@ -1,0 +1,25 @@
+<1993apr1520062414745@scottskidmoreedu> 1
+<1993apr2021281923902@holos0uucp> 1
+<93106202527io20456@mainemaineedu> 1
+call 1
+fly 1
+from 1
+hall 1
+infield 1
+io20456@mainemaineedu 2
+line 1
+maine 2
+organization 1
+penobscot 1
+play 1
+progress 1
+robbin 2
+rule 1
+ryan 2
+subject 1
+system 1
+there 1
+time 1
+university 2
+you 1
+

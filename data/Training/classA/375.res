@@ -1,0 +1,21 @@
+all 1
+brigham 1
+fax 1
+from 1
+kawasaki 1
+line 1
+machine 1
+nntp-posting-host 1
+organization 1
+say 1
+sub 1
+subject 1
+tatsuy 1
+tatsuya 1
+tatsuya@zapotecmathbyuedu 1
+thnx 1
+university 1
+wanted 1
+young 1
+zapotecmathbyuedu 1
+

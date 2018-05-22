@@ -1,0 +1,26 @@
+buing 1
+contact 1
+distribution 1
+emd9882@ritvaxiscritedu 2
+from 1
+how 1
+institute 1
+interseted 1
+nntp-posting-host 1
+organization 1
+please 1
+reply 1
+reply-to 1
+rit 1
+rochester 1
+sale 1
+saying 1
+some 1
+student 1
+subject 1
+technology 1
+thosei 1
+usa 1
+vaxaiscritedu 1
+youed 1
+

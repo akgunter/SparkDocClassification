@@ -1,0 +1,26 @@
+$22000 1
+brand 1
+brian 1
+craig 1
+craigb@rpiedu 1
+craigb@rs6312ecsrpiedu 1
+distribution 1
+forsale 1
+from 1
+institute 1
+line 1
+miscforsale 1
+never 1
+new 1
+nntp-posting-host 1
+opened 1
+organization 1
+pair 1
+polk 2
+polytechnic 1
+rensselaer 1
+rs6312ecsrpiedu 1
+sale 1
+subject 1
+troy 1
+

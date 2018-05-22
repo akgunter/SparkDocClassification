@@ -1,0 +1,24 @@
+4sale 1
+alway 2
+best 1
+cable 1
+card 2
+cg132sad@icogsci1ucsdedu 1
+cim 1
+from 1
+gyro@ucsdedu 1
+icogsci1ucsdedu 1
+in-2000 3
+keyword 1
+line 1
+make 1
+nntp-posting-host 1
+offer 1
+sale 1
+scsi 2
+software 1
+subject 1
+this 1
+wmanual 1
+your 1
+

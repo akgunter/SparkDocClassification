@@ -1,0 +1,20 @@
+anyone 1
+applied 2
+bell-northern 1
+call 1
+engineering 2
+from 1
+give 1
+langlois 3
+line 1
+ltd 1
+number 2
+organization 1
+phone 1
+reply-to 1
+research 1
+slang@bnrca 3
+steven 3
+subject 1
+them 1
+

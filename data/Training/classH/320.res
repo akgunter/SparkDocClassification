@@ -1,0 +1,25 @@
+all 1
+converter 1
+dept 1
+dta15 1
+fizyk1 1
+fli 1
+from 1
+gif 2
+hello 1
+krzysztof 2
+line 1
+make 1
+muchor@fuwedupl 1
+muchorowski 1
+need 1
+nntp-posting-host 1
+organization 1
+physic 1
+say 1
+subject 2
+targa 2
+them 1
+university 1
+warsaw 1
+

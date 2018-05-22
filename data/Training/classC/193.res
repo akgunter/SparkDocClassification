@@ -1,0 +1,27 @@
+any 1
+anyone 1
+appreciated 1
+circuit 1
+cole 1
+doe 1
+from 1
+get 1
+help 1
+know 1
+line 1
+mcole@nmsuedu 1
+mcole@spock 1
+mexico 1
+micro 1
+microstepping 1
+new 1
+nntp-posting-host 1
+organization 1
+schematic 1
+spocknmsuedu 1
+state 1
+stepping 1
+subject 1
+university 1
+where 1
+

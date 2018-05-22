@@ -1,0 +1,25 @@
+800x600 1
+capture 3
+dos 1
+from 1
+harlan 1
+hwstock@sandiallnlgov 1
+hwstock@snll-arpagwllnlgov 1
+keyword 1
+laboratory 1
+line 1
+national 1
+organization 1
+reliably 1
+sandia 1
+screen 3
+shareware 1
+stockman 2
+subject 1
+thank 1
+there 1
+utility 1
+vesa 1
+will 1
+work 1
+

@@ -1,0 +1,27 @@
+advise 1
+any 2
+before 1
+black 1
+box 1
+build 1
+comment 1
+concerning 1
+convertion 1
+electret 1
+feed 1
+get 1
+i´m 1
+level 1
+meter 1
+mic 1
+pic16f88 1
+plan 1
+planning 1
+project 1
+sound 1
+start 1
+this 1
+thxsbye 1
+use 1
+welcome 1
+

@@ -1,0 +1,174 @@
+'quest' 1
+'sam 1
+about 3
+across 1
+all 1
+also 4
+alum 1
+alway 2
+amateur 1
+amateurhigh 1
+amorphous 1
+answer 1
+any 2
+anyone 1
+application 2
+application 1
+artificially 4
+badly 1
+because 1
+being 2
+buying 1
+chemical 1
+chemist 1
+college 1
+come 1
+complex 1
+concentrating 1
+crystal 13
+crystalization 1
+dead 1
+device 2
+dopant 2
+doped 10
+doping 2
+easily 1
+economically 1
+end 1
+even 1
+eventually 1
+every 1
+exclude 1
+expert 1
+faq' 1
+far 1
+favorable 1
+fluorapatite 1
+fluoresce 1
+fluorescent 7
+fluorescently 1
+found 3
+giving 1
+glass 1
+grow 1
+growing 3
+grown 5
+happen 1
+has 2
+help 1
+homebuilt 1
+hopefully 1
+how 4
+however 1
+idea 2
+ideal 1
+impossibility 1
+impossible 1
+impurity 2
+industrial 1
+instance 1
+interesting 1
+internet 1
+inversion 1
+involved 1
+kid 1
+kitchen 1
+know 5
+knowledgeable 1
+lamp 1
+large 1
+laser 8
+lasing 2
+learn 2
+like 4
+little 1
+looked 2
+looking 1
+major 1
+make 1
+making 1
+math 1
+maybe 1
+medium 2
+mention 1
+methink 1
+might 6
+mineral 3
+more 3
+must 1
+natually 1
+natural 1
+naturally 2
+next 1
+nice 1
+nonscientist 1
+not 8
+obtaining 1
+occurring 1
+one 3
+only 1
+other 4
+over 1
+piezoelectric 8
+population 1
+possible 1
+possible 1
+proceed 1
+produce 1
+project 1
+property 1
+purify 1
+quartz 6
+question 1
+rare 1
+really 1
+recipe 1
+regularly 1
+requirement 1
+ruby 1
+rubyndglassetc 1
+ruin 1
+sale 1
+salt 1
+saltsugarwhatever 1
+school 1
+section 1
+see 1
+since 3
+slightly 1
+solid 3
+soluable 1
+some 3
+state 2
+strongly 1
+student 1
+substance 3
+sugar 1
+suggested 1
+suitable 1
+teach 1
+than 1
+their 1
+them 1
+they 3
+thing 1
+think 2
+this 1
+tinkerer 1
+tinkerers 1
+too 1
+tourmaline 5
+transparent 1
+trying 1
+unless 1
+use 1
+used 3
+usually 1
+very 1
+viable 1
+was 4
+water 1
+what 4
+work 1
+wouldn't 1
+

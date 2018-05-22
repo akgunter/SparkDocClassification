@@ -1,0 +1,23 @@
+1024x768 1
+28dp 1
+29500 1
+best 1
+corp 1
+from 1
+kfc 1
+line 1
+monitor 2
+non-interlaced 1
+offer 1
+organization 1
+ralf 1
+ralf@iqsccom 1
+sale 2
+screen 1
+software 1
+still 1
+subject 1
+svga 1
+under 1
+warranty 1
+

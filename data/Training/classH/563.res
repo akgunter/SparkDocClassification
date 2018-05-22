@@ -1,0 +1,24 @@
+510-523-5900 1
+address 1
+email 1
+eric 2
+eric@ithacacom 2
+flyer 1
+from 1
+ithaca 3
+ithacahoops 1
+line 1
+n613wd 1
+oakland 1
+organization 1
+phone 1
+pp-asel-ia 1
+reached 1
+skylane 1
+software 2
+subject 1
+support 1
+tech_support@ithacacom 1
+technical 1
+wagner 2
+

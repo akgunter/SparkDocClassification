@@ -1,0 +1,27 @@
+^^^^^^ 1
+angele 1
+cheap 1
+cpuserveracsccom 1
+directory 1
+distribution 1
+from 1
+grant 2
+line 1
+location 1
+los 1
+nntp-posting-host 1
+organization 1
+publicvirtual-world 1
+reality 1
+reply-to 1
+robert 3
+robert@acsccom 1
+robert@cpuserveracsccom 2
+should 1
+sorry 1
+subject 1
+update 1
+uscacsc 1
+virtual 1
+world 1
+

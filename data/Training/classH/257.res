@@ -1,0 +1,26 @@
+[version 1
+any 1
+auggestion 1
+college 1
+dna 2
+e-mail 1
+from 1
+helix 2
+junior 1
+line 1
+looking 1
+lynch 1
+nermalsantarosaedu 1
+nntp-posting-host 1
+organization 1
+pl8] 1
+please 1
+rosa 2
+santa 2
+subject 1
+tiffeps 1
+tim 1
+tin 1
+tlynch@nermalsantarosaedu 1
+x-newsreader 1
+

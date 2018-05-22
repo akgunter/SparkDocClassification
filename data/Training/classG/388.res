@@ -1,0 +1,26 @@
+2-5 2
+arlington 1
+cartlidge 1
+cs1442aq 1
+cs1442aq@newsutaedu 1
+expected 1
+from 1
+has 1
+having 1
+inhis 1
+knee 1
+line 1
+miss 1
+nolan 1
+organization 1
+out 1
+right 1
+ryam 1
+ryan 1
+subject 1
+surgery 1
+texa 1
+torn 1
+university 1
+week 2
+

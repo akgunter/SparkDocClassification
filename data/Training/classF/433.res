@@ -1,0 +1,25 @@
+any 1
+anyone 1
+binghampton 2
+doe 1
+even 1
+from 1
+game 2
+know 1
+kwolfer@eaglewesleyanedu 1
+line 1
+msg 1
+nice 1
+nntp-posting-host 1
+organization 1
+playoff 2
+ranger 2
+replay 1
+subject 1
+taped 1
+televise 1
+university 1
+wesleyan 1
+will 1
+willetwesleyanedu 1
+

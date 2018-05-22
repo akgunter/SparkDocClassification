@@ -1,0 +1,23 @@
+$1995 1
+94305 1
+distribution 1
+dsg 1
+fool 1
+from 1
+got 1
+line 1
+off 1
+organization 1
+paid 1
+ripped 1
+ryan 1
+ryner@lelandstanfordedu 1
+sale 1
+stanford 1
+subject 1
+tamm 1
+university 1
+usa 2
+you 2
+you're 1
+

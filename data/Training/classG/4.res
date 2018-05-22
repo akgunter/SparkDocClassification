@@ -1,0 +1,24 @@
+csu 1
+distribution 1
+early 1
+from 1
+giant 3
+guess 1
+here 1
+i'm 1
+line 1
+little 1
+maria 1
+mrosales@kokocsustanedu 1
+october 1
+ooops 1
+organization 1
+pennant 3
+rosale 1
+see 1
+stanislau 1
+subject 1
+usa 1
+win 3
+you 1
+

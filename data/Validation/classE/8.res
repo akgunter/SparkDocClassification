@@ -1,0 +1,21 @@
+about 1
+any 2
+clock 2
+cumc 1
+failure 1
+from 1
+iisi 4
+iron 1
+itchcy 1
+line 1
+mac 1
+mhz 2
+new 1
+organization 1
+owner 2
+report 1
+slow 1
+soldering 1
+subject 1
+upgrade 2
+

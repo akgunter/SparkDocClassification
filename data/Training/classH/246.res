@@ -1,0 +1,19 @@
+<kkim@csindianaedu> 1
+bloomington 1
+computer 1
+distribution 1
+faq 1
+find 1
+from 1
+indiana 1
+kim 1
+kwansik 2
+line 1
+organization 1
+science 1
+subject 1
+thank 1
+university 1
+usa 1
+where 2
+

@@ -1,0 +1,27 @@
+$10 1
+-dennis 1
+<dlneal> 1
+c64128 2
+cbda9apgeaarmymil 1
+dennis 1
+dlneal@apgeaarmymil 1
+dlneal@cbda9apgeaarmymil 1
+edgewood 1
+email 1
+first 1
+from 1
+game 1
+get 1
+line 1
+neal 2
+nntp-posting-host 1
+only 1
+organization 1
+plu 1
+sale 1
+selling 1
+shipping 1
+subject 1
+thanx 1
+x-men 2
+

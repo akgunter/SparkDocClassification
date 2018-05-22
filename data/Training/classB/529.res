@@ -1,0 +1,20 @@
+<rcbs944@haifauvmbitnet> 1
+condition 1
+david 2
+error 1
+from 1
+gotlieb 2
+israel 1
+line 1
+located 1
+name 1
+nysernet 1
+organization 1
+originator 1
+rcbs944@haifauvmbitnet 1
+reply-to 1
+subject 1
+subscribe 1
+tpm@israelnysernetorg 1
+want 1
+

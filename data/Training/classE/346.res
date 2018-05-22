@@ -1,0 +1,26 @@
+above 1
+article-id 1
+auckland 2
+ccu11993apr230211501065 1
+faculty 1
+from 1
+iif 1
+iig 1
+law 1
+line 1
+mark 1
+mark@lawaukuniacnz 1
+markp@ccu1aukuniacnz 1
+new 2
+organization 1
+pds 1
+perry 2
+printer 1
+seem 1
+slot 2
+subject 1
+there 1
+university 2
+what 1
+zealand 2
+

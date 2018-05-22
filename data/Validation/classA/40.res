@@ -1,0 +1,21 @@
+5417younisa@vmscsdmuedu 2
+>40 1
+computer 1
+drive 1
+e-mail 1
+from 1
+hard 1
+ide 1
+line 1
+marquette 1
+monitor 1
+nntp-posting-host 1
+organization 1
+reply-to 1
+service 1
+subject 1
+university 1
+vga 1
+vmsfcsdmuedu 1
+wanted 1
+

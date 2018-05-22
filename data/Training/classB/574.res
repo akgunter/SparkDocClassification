@@ -1,0 +1,25 @@
+___ 1
+____ 2
+____________________ 1
+bank 2
+baseball 2
+etcorganization 1
+from 1
+halaimitedu 1
+has 2
+league 1
+line 1
+national 1
+nick 1
+nntp-posting-host 1
+organization 1
+pitcher 1
+recruiting 1
+reported 1
+spotted 1
+steel 1
+steel@halgnuaimitedu 1
+subject 1
+they 1
+west 2
+

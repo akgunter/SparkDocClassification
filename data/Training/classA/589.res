@@ -1,0 +1,25 @@
+20mhz 2
+386dx 2
+4meg 1
+60n 1
+90041 1
+angele 1
+college 1
+coutsoft@cheshireoxyedu 1
+coutsoftide 1
+from 1
+hate 1
+line 1
+los 1
+make 1
+michael 2
+motherboard 1
+occidental 1
+offer 1
+organization 1
+post 1
+ram 1
+sale 1
+subject 1
+usa 1
+

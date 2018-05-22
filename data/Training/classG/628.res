@@ -1,0 +1,27 @@
+a's 1
+add 1
+ari 2
+awe@lochmitedu 1
+baseball 1
+baseman 1
+cmpo 1
+distribution 1
+epstein 2
+first 1
+former 1
+from 1
+jewish 1
+line 1
+list 1
+lochmitedu 1
+mike 1
+mit 1
+nntp-posting-host 1
+organization 1
+player 1
+relation 1
+subject 1
+think 1
+world 1
+you 1
+

@@ -1,0 +1,27 @@
+94305 1
+able 1
+adam 1
+anywhere 1
+card 1
+don't 1
+dsg 1
+email 1
+find 1
+from 1
+get 1
+how 1
+line 1
+macweek 2
+nash 1
+one 1
+organization 1
+samuel 1
+seem 1
+smashman@lelandstanfordedu 2
+stanford 1
+subject 1
+subscription 2
+university 1
+usa 1
+want 2
+

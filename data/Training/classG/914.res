@@ -1,0 +1,27 @@
+---------- 1
+>san 1
+affiliate 1
+california 1
+corporate 1
+cucamunga 1
+francisco 1
+from 1
+game 1
+howard 1
+league 1
+let 1
+line 1
+lynch 1
+lynch@hpcc01corphpcom 1
+name 1
+nickname 1
+note 1
+organization 1
+padre 1
+play 1
+quake 3
+rancho 1
+server 1
+subject 1
+way 1
+

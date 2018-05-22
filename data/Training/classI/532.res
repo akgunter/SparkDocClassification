@@ -1,0 +1,27 @@
+calibrat 1
+change 2
+cluster 2
+computer 1
+department 1
+drive 2
+dunno 1
+from 1
+glenn 2
+gtj@goannacsrmitozau 1
+how 1
+ide 2
+jayaputera 2
+line 1
+mfmrll 1
+normally 1
+norton 1
+organization 1
+rmit 1
+science 1
+size 2
+somebody 1
+subject 1
+tell 1
+too 1
+wondering 1
+
