@@ -2,9 +2,10 @@ package net.ddns.akgunter.scala_classifier.document_classifier
 
 import scopt._
 
-import net.ddns.akgunter.scala_classifier.util.DataPoint
 import net.ddns.akgunter.scala_classifier.util.FileUtil._
 import net.ddns.akgunter.scala_classifier.util.PreprocessingUtil._
+import net.ddns.akgunter.scala_classifier.models.DataPoint
+import net.ddns.akgunter.scala_classifier.models.WordIndex
 
 object RunClassifier {
 
@@ -21,14 +22,14 @@ object RunClassifier {
     val validationData = validationFilenames.map(DataPoint.fromFile)
     val testingData = testingFileNames.map(DataPoint.fromFile)
 
-    val (wordLookup, wordOrdering) = buildWordIndex(Array(trainingData, validationData))
+    val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
-    val trainingMatrix = buildMatrix(trainingData, wordOrdering)
-    val validationMatrix = buildMatrix(validationData, wordOrdering)
-    val testingMatrix = buildMatrix(testingData, wordOrdering)
+    val trainingMatrix = buildMatrix(trainingData, wordIndex.wordOrdering)
+    val validationMatrix = buildMatrix(validationData, wordIndex.wordOrdering)
+    val testingMatrix = buildMatrix(testingData, wordIndex.wordOrdering)
 
-    println(trainingMatrix.length, trainingMatrix(0).length)
-    println(validationMatrix.length, validationMatrix(0).length)
-    println(testingMatrix.length, testingMatrix(0).length)
+    println(trainingMatrix.length, trainingMatrix.head.length)
+    println(validationMatrix.length, validationMatrix.head.length)
+    println(testingMatrix.length, testingMatrix.head.length)
   }
 }

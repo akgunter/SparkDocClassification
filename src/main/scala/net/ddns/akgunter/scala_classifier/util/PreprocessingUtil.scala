@@ -1,13 +1,8 @@
 package net.ddns.akgunter.scala_classifier.util
 
+import net.ddns.akgunter.scala_classifier.models.DataPoint
+
 object PreprocessingUtil {
-
-  def buildWordIndex(dataSets: Array[Array[DataPoint]]): (DataPoint, Array[String]) = {
-    val wordLookup = dataSets.flatten.reduce(_ ++ _)
-    val wordOrdering = wordLookup.toMap.keySet.toArray
-
-    wordLookup -> wordOrdering
-  }
 
   def vectorize(point: DataPoint,
                 wordOrdering: Array[String]): Array[Int] = {
@@ -20,4 +15,6 @@ object PreprocessingUtil {
 
     dataSet.map(vectorize(_, wordOrdering))
   }
+
+  def tfidf()
 }

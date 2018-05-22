@@ -1,9 +1,9 @@
-package net.ddns.akgunter.scala_classifier.util
+package net.ddns.akgunter.scala_classifier.models
+
+import scalaz.Scalaz._
 
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
-
-import scalaz.Scalaz._
 
 case class DataPoint(private val data: Map[String, Int]) {
 
