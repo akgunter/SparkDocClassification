@@ -15,6 +15,4 @@ object PreprocessingUtil {
 
     dataSet.map(vectorize(_, wordOrdering))
   }
-
-  def tfidf()
 }
