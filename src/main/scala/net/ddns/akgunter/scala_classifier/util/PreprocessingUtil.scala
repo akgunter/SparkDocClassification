@@ -1,39 +1,46 @@
 package net.ddns.akgunter.scala_classifier.util
 
+import net.ddns.akgunter.scala_classifier.lib._
 import net.ddns.akgunter.scala_classifier.models.DataPoint
 import net.ddns.akgunter.scala_classifier.models.WordIndex
 
 object PreprocessingUtil {
 
   def vectorize(point: DataPoint,
-                wordIndex: WordIndex): Array[Int] = {
+                wordIndex: WordIndex): SparseVector[Int] = {
 
-    wordIndex.wordOrdering.map(point.toMap.getOrElse(_, 0))
+    val vector = wordIndex.wordOrdering.map(point.toMap.getOrElse(_, 0))
+    SparseVector.fromVector(vector)
   }
 
-  def buildMatrix(dataSet: Array[DataPoint],
-                  wordIndex: WordIndex): Array[Array[Int]] = {
+  def buildSparseMatrix(dataSet: Array[DataPoint],
+                                    wordIndex: WordIndex): SparseMatrix[Int] = {
 
-    dataSet.map(vectorize(_, wordIndex))
+    val vectorList = dataSet.map(vectorize(_, wordIndex))
+    SparseMatrix.fromMatrix(vectorList)
   }
 
-  def calcTF(dataRow: Array[Int]): Array[Double] = {
+  def calcTF(dataRow: SparseVector[Int]): SparseVector[Double] = {
     val wordsInRow = dataRow.sum.toDouble
-    dataRow.map(_ / wordsInRow)
+    SparseVector.fromVector(dataRow.map(_ / wordsInRow))
   }
 
-  def calcIDF(dataMatrix: Array[Array[Int]]): Array[Double] = {
-    dataMatrix.transpose.map {
-      col => Math.log10(dataMatrix.length / col.count(_ != 0))
+  def calcIDF(dataMatrix: SparseMatrix[Int]): SparseVector[Double] = {
+    val mtrx = dataMatrix.transpose.map {
+      col =>
+        val numDocs = col.count(_ != 0)
+        -Math.log10(numDocs / (dataMatrix.length + numDocs))
     }
+
+    SparseVector.fromVector(mtrx)
   }
 
-  def tfidf(dataMatrix: Array[Array[Int]],
-            idfVector: Array[Double]): Array[Array[Double]] = {
+  def calcTFIDF(dataMatrix: SparseMatrix[Int],
+                idfVector: SparseVector[Double]): SparseMatrix[Double] = {
 
-    val tfMatrix = dataMatrix.map(calcTF)
-    println(Array(tfMatrix.length, tfMatrix.head.length, idfVector.length).mkString(","))
+    val tfMatrix: SparseMatrix[Double] = SparseMatrix.fromMatrix(dataMatrix.map(calcTF))
+    println(Array(tfMatrix.length, tfMatrix.width, idfVector.length).mkString(","))
 
-    Array(Array(0.0))
+    SparseMatrix.fromMatrix(Array(Array(0.0).toIterable))
   }
 }

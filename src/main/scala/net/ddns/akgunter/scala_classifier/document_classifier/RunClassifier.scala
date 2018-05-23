@@ -6,6 +6,7 @@ import net.ddns.akgunter.scala_classifier.util.FileUtil._
 import net.ddns.akgunter.scala_classifier.util.PreprocessingUtil._
 import net.ddns.akgunter.scala_classifier.models.DataPoint
 import net.ddns.akgunter.scala_classifier.models.WordIndex
+import net.ddns.akgunter.scala_classifier.lib._
 
 object RunClassifier {
 
@@ -24,15 +25,16 @@ object RunClassifier {
 
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
-    val trainingMatrix = buildMatrix(trainingData, wordIndex)
-    val validationMatrix = buildMatrix(validationData, wordIndex)
-    val testingMatrix = buildMatrix(testingData, wordIndex)
+    val trainingMatrix = buildSparseMatrix(trainingData, wordIndex)
+    val validationMatrix = buildSparseMatrix(validationData, wordIndex)
+    val testingMatrix = buildSparseMatrix(testingData, wordIndex)
 
     println(trainingMatrix.length, trainingMatrix.head.length)
     println(validationMatrix.length, validationMatrix.head.length)
     println(testingMatrix.length, testingMatrix.head.length)
 
-    val idfVector = calcIDF(trainingMatrix)
-    println(idfVector.length)
+    trainingMatrix.transpose.map(_.sum).zipWithIndex.foreach {
+      case(s, idx) => if (s == 0) println(wordIndex.wordOrdering(idx))
+    }
   }
 }
