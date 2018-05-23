@@ -15,6 +15,7 @@ object RunClassifier {
     val validationDir = "./data/Validation"
     val testingDir = "./data/Testing"
 
+    println("Loading data...")
     val trainingFilenames = traverseLabeledDataFiles(trainingDir)
     val validationFilenames = traverseLabeledDataFiles(validationDir)
     val testingFileNames = traverseUnlabeledDataFiles(testingDir)
@@ -26,12 +27,15 @@ object RunClassifier {
     val trainingLabels = trainingFilenames.map(getLabelFromFilePath)
     val validationLabels = validationFilenames.map(getLabelFromFilePath)
 
+    println("Building word index...")
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
+    println("Building matrices...")
     val trainingMatrix = buildSparseMatrix(trainingData, wordIndex)
     val validationMatrix = buildSparseMatrix(validationData, wordIndex)
     val testingMatrix = buildSparseMatrix(testingData, wordIndex)
 
+    println("Calculating TF-IDF values...")
     val idfVector = calcIDF(trainingMatrix ++ validationMatrix)
     val trainingProc = calcTFIDF(trainingMatrix, idfVector)
     val validationProc = calcTFIDF(validationMatrix, idfVector)
