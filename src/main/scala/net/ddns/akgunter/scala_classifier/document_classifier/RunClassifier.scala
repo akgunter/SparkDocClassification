@@ -14,7 +14,7 @@ object RunClassifier {
     val trainingDir = "./data/Training"
     val validationDir = "./data/Validation"
     val testingDir = "./data/Testing"
-    
+
     val trainingFilenames = traverseLabeledDataFiles(trainingDir)
     val validationFilenames = traverseLabeledDataFiles(validationDir)
     val testingFileNames = traverseUnlabeledDataFiles(testingDir)
@@ -33,6 +33,6 @@ object RunClassifier {
     println(validationMatrix.length, validationMatrix.head.length)
     println(testingMatrix.length, testingMatrix.head.length)
 
-    val idfVector = calcIDF(trainingData)
+    val idfVector = calcIDF(trainingMatrix)
   }
 }
