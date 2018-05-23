@@ -20,9 +20,10 @@ object PreprocessingUtil {
     SparseMatrix.fromMatrix(vectorList)
   }
 
-  def calcTF(dataRow: SparseVector[Int]): SparseVector[Double] = {
-    val wordsInRow = dataRow.sum.toDouble
-    SparseVector.fromVector(dataRow.vector.map(_ / wordsInRow))
+  def calcTF(vector: SparseVector[Int]): SparseVector[Double] = {
+    val wordsInRow = vector.sum.toDouble
+    val newVector = vector.vector.map { case (k, v) => k -> v / wordsInRow }.toMap
+    SparseVector(newVector, vector.length)
   }
 
   def calcIDF(dataMatrix: SparseMatrix[Int]): SparseVector[Double] = {
@@ -38,9 +39,9 @@ object PreprocessingUtil {
   def calcTFIDF(dataMatrix: SparseMatrix[Int],
                 idfVector: SparseVector[Double]): SparseMatrix[Double] = {
 
-    val tfMatrix: SparseMatrix[Double] = SparseMatrix.fromMatrix(dataMatrix.map(calcTF))
-    println(Array(tfMatrix.length, tfMatrix.width, idfVector.length).mkString(","))
+    val tfMatrix = dataMatrix.table.map { case (k, v) => k -> calcTF(v) }
+    val tfidfMatrix = tfMatrix.map { case (k, v) => k -> v * idfVector }.toMap
 
-    SparseMatrix.fromMatrix(Array(Array(0.0).toIterable))
+    SparseMatrix(tfidfMatrix, dataMatrix.shape)
   }
 }

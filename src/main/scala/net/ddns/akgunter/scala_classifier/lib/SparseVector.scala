@@ -16,18 +16,32 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
     this.vector.valuesIterator
   }
 
-  override def count(p: A => Boolean): Int = this.vector.values.filter(p).size
+  override def count(p: A => Boolean): Int = this.vector.values.count(p)
 
   def sum: A = this.vector.values.sum
 
   override def size: Int = this.length
 
   def +(that: SparseVector[A]): SparseVector[A] = {
+    if (this.length != that.length)
+      throw new IllegalArgumentException(s"Vectors have different lengths ${this.length} and ${that.length}")
+
     val sumVector = (this.keySet | that.keySet).map {
       k => k -> implicitly[Numeric[A]].plus(this(k), that(k))
     }.toMap
 
     SparseVector(sumVector, this.length max that.length)
+  }
+
+  def *(that: SparseVector[A]): SparseVector[A] = {
+    if (this.length != that.length)
+      throw new IllegalArgumentException(s"Vectors have different lengths ${this.length} and ${that.length}")
+
+    val prodVector = (this.keySet & that.keySet).map {
+      k => k -> implicitly[Numeric[A]].times(this(k), that(k))
+    }.toMap
+
+    SparseVector(prodVector, this.length)
   }
 }
 

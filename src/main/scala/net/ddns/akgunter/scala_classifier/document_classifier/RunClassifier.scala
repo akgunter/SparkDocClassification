@@ -31,7 +31,7 @@ object RunClassifier {
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
     println(calcTF(vectorize(trainingData.head, wordIndex)))
-    
+
     /*
     println("Building matrices...")
     val trainingMatrix = buildSparseMatrix(trainingData, wordIndex)
