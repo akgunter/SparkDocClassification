@@ -45,6 +45,18 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
 
     SparseMatrix.fromMatrix(rows)
   }
+
+  def ++(that: SparseMatrix[A]): SparseMatrix[A] = {
+    if (this.width != that.width)
+      throw new ArithmeticException(s"width ${this.width} does not match width ${that.width}")
+
+    val newRows = that.table.map {
+      case(k, v) => (k + this.length) -> v
+    }
+
+    val newTable = this.table ++ newRows
+    SparseMatrix(newTable, (this.length + that.length, this.width))
+  }
 }
 
 object SparseMatrix {

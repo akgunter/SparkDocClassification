@@ -23,4 +23,13 @@ object FileUtil {
   def traverseUnlabeledDataFiles(baseDir: String): Array[String] = {
     listDataFiles(baseDir)
   }
+
+  def getLabelFromFilePath(filePath: String): String = {
+    val foundPattern = "class[A-Z]*".r.findFirstIn(filePath)
+
+    foundPattern match {
+      case Some(v) => v
+      case None => throw new IllegalArgumentException(s"File path ${filePath} is unlabelled")
+    }
+  }
 }
