@@ -5,8 +5,8 @@ import scalaz.\&/.That
 case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
                                     shape: (Int, Int)) extends Iterable[SparseVector[A]] {
 
-  val rowDomain = this.table.keySet.toArray.sorted
-  val colDomain = this.table.map(_._2.keySet).reduce(_ | _).toArray.sorted
+  val rowDomain = this.table.keySet
+  val colDomain = this.table.map(_._2.keySet).reduce(_ | _)
 
 
   def apply(idx: Int): SparseVector[A] = {
@@ -34,15 +34,31 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
   def length: Int = this.size
 
   def width: Int = this.shape._2
+
+  def +(that: SparseMatrix[A]): SparseMatrix[A] = {
+    if (this.shape != that.shape)
+      throw new ArithmeticException(s"Shape ${this.shape} does not match shape ${that.shape}")
+
+    val rows = (this.rowDomain | that.rowDomain).map {
+      k: Int => this(k) + that(k)
+    }
+
+    SparseMatrix.fromMatrix(rows)
+  }
 }
 
 object SparseMatrix {
 
   def fromMatrix[A: Numeric](array: Iterable[Iterable[A]]): SparseMatrix[A] = {
-    val table = array.zipWithIndex.map {
+    val table = array.zipWithIndex
+      .map {
       case(row, i) =>
         val sparseVector = SparseVector.fromVector(row)
         i -> sparseVector
+    }.filter {
+      case(i, v) =>
+        if (v.keySet.size > 0) true
+        else false
     }.toMap
 
     SparseMatrix(table, array.size -> array.head.size)
