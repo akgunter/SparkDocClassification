@@ -2,6 +2,8 @@ package net.ddns.akgunter.scala_classifier.lib
 
 import scalaz.\&/.That
 
+import scala.collection.generic.CanBuildFrom
+
 case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
                                     shape: (Int, Int)) extends Iterable[SparseVector[A]] {
 

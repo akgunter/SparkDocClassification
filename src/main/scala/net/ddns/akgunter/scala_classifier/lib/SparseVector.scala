@@ -16,6 +16,10 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
     this.vector.valuesIterator
   }
 
+  override def count(p: A => Boolean): Int = this.vector.values.filter(p).size
+
+  def sum: A = this.vector.values.sum
+
   override def size: Int = this.length
 
   def +(that: SparseVector[A]): SparseVector[A] = {

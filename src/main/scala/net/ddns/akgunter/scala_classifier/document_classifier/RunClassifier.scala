@@ -30,6 +30,9 @@ object RunClassifier {
     println("Building word index...")
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
+    println(calcTF(vectorize(trainingData.head, wordIndex)))
+    
+    /*
     println("Building matrices...")
     val trainingMatrix = buildSparseMatrix(trainingData, wordIndex)
     val validationMatrix = buildSparseMatrix(validationData, wordIndex)
@@ -40,5 +43,6 @@ object RunClassifier {
     val trainingProc = calcTFIDF(trainingMatrix, idfVector)
     val validationProc = calcTFIDF(validationMatrix, idfVector)
     val testingProc = calcTFIDF(testingMatrix, idfVector)
+    */
   }
 }

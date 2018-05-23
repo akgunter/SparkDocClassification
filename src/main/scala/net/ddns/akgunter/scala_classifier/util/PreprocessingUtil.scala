@@ -22,12 +22,12 @@ object PreprocessingUtil {
 
   def calcTF(dataRow: SparseVector[Int]): SparseVector[Double] = {
     val wordsInRow = dataRow.sum.toDouble
-    SparseVector.fromVector(dataRow.map(_ / wordsInRow))
+    SparseVector.fromVector(dataRow.vector.map(_ / wordsInRow))
   }
 
   def calcIDF(dataMatrix: SparseMatrix[Int]): SparseVector[Double] = {
-    val mtrx = dataMatrix.transpose.map {
-      col =>
+    val mtrx = dataMatrix.transpose.table.map {
+      case (_, col) =>
         val numDocs = col.count(_ != 0)
         -Math.log10(numDocs / (dataMatrix.length + numDocs))
     }
