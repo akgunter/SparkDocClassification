@@ -1,19 +1,17 @@
 package net.ddns.akgunter.scala_classifier.lib
 
-import scalaz.\&/.That
-
-import scala.collection.generic.CanBuildFrom
-
 case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
-                                    shape: (Int, Int)) extends Iterable[SparseVector[A]] {
+                                    shape: (Int, Int)) {
 
-  val rowDomain = this.table.keySet
-  val colDomain = this.table.map(_._2.keySet).reduce(_ | _)
-
+  private val rowDomain: Set[Int] = this.table.keySet
+  private val colDomain: Set[Int] = this.table.map(_._2.keySet).reduce(_ | _)
 
   def apply(idx: Int): SparseVector[A] = {
-    if (this.table.contains(idx)) this.table(idx)
-    else SparseVector(this.table(this.colDomain.head).vector.empty, this.width)
+    this.table.getOrElse(idx, SparseVector.empty[A](this.width))
+  }
+
+  def map[B](f: (Int, A) => (Int, SparseVector[B])): SparseMatrix[B] = {
+    SparseMatrix(this.table.map(f(_)), this.shape)
   }
 
   def transpose: SparseMatrix[A] = {
@@ -27,13 +25,7 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
     SparseMatrix(grid, this.shape)
   }
 
-  override def iterator: Iterator[SparseVector[A]] = {
-    this.table.valuesIterator
-  }
-
-  override def size: Int = this.shape._1
-
-  def length: Int = this.size
+  def length: Int = this.shape._1
 
   def width: Int = this.shape._2
 
@@ -42,10 +34,10 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
       throw new ArithmeticException(s"Shape ${this.shape} does not match shape ${that.shape}")
 
     val rows = (this.rowDomain | that.rowDomain).map {
-      k: Int => this(k) + that(k)
-    }
+      k => k -> (this(k) + that(k))
+    }.toMap
 
-    SparseMatrix.fromMatrix(rows)
+    SparseMatrix(rows, this.shape)
   }
 
   def ++(that: SparseMatrix[A]): SparseMatrix[A] = {
@@ -70,9 +62,7 @@ object SparseMatrix {
         val sparseVector = SparseVector.fromVector(row)
         i -> sparseVector
     }.filter {
-      case(i, v) =>
-        if (v.keySet.size > 0) true
-        else false
+      case(_, v) => v.keySet.nonEmpty
     }.toMap
 
     SparseMatrix(table, array.size -> array.head.size)

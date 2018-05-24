@@ -2,29 +2,30 @@ package net.ddns.akgunter.scala_classifier.lib
 
 import scala.math.Numeric
 
+import scala.collection.GenTraversableOnce
+
 case class SparseVector[A: Numeric](vector: Map[Int, A],
-                                    length: Int) extends Iterable[A] {
+                                    length: Int) {
 
   def apply(idx: Int): A = {
-    if (this.vector.contains(idx)) this.vector(idx)
-    else implicitly[Numeric[A]].zero
+    this.vector.getOrElse(idx, implicitly[Numeric[A]].zero)
   }
 
   def keySet: Set[Int] = this.vector.keySet
 
-  override def iterator: Iterator[A] = {
-    this.vector.valuesIterator
-  }
-
-  override def count(p: A => Boolean): Int = this.vector.values.count(p)
+  def count(p: A => Boolean): Int = this.vector.values.count(p)
 
   def sum: A = this.vector.values.sum
 
-  override def size: Int = this.length
+  def map[B](f: (Int, A) => (Int, B)): SparseVector[B] = {
+    SparseVector(this.vector.map(f(_)), this.length)
+  }
 
   def +(that: SparseVector[A]): SparseVector[A] = {
-    if (this.length != that.length)
-      throw new IllegalArgumentException(s"Vectors have different lengths ${this.length} and ${that.length}")
+    assert(
+      this.length == that.length,
+      s"Vectors have different lengths ${this.length} and ${that.length}"
+    )
 
     val sumVector = (this.keySet | that.keySet).map {
       k => k -> implicitly[Numeric[A]].plus(this(k), that(k))
@@ -34,8 +35,10 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
   }
 
   def *(that: SparseVector[A]): SparseVector[A] = {
-    if (this.length != that.length)
-      throw new IllegalArgumentException(s"Vectors have different lengths ${this.length} and ${that.length}")
+    assert(
+      this.length == that.length,
+      s"Vectors have different lengths ${this.length} and ${that.length}"
+    )
 
     val prodVector = (this.keySet & that.keySet).map {
       k => k -> implicitly[Numeric[A]].times(this(k), that(k))
@@ -44,7 +47,7 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
     SparseVector(prodVector, this.length)
   }
 
-  override def toString(): String = this.vector.toString
+  override def toString: String = this.vector.toString
 }
 
 object SparseVector {
@@ -59,4 +62,6 @@ object SparseVector {
 
     SparseVector(vectorMap, vector.size)
   }
+
+  def empty[A: Numeric](length: Int): SparseVector[A] = SparseVector(Map.empty[Int, A], length)
 }
