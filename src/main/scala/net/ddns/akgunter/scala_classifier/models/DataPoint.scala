@@ -12,6 +12,8 @@ case class DataPoint(private val data: Map[String, Int]) {
   def ++(that: DataPoint): DataPoint = {
     DataPoint(this.data |+| that.data)
   }
+
+  override def toString(): String = this.data.toString
 }
 
 object DataPoint {

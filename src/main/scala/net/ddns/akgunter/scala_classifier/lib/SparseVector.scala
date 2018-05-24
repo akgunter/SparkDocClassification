@@ -43,6 +43,8 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
 
     SparseVector(prodVector, this.length)
   }
+
+  override def toString(): String = this.vector.toString
 }
 
 object SparseVector {

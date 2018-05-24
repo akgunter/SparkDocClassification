@@ -28,12 +28,12 @@ object PreprocessingUtil {
 
   def calcIDF(dataMatrix: SparseMatrix[Int]): SparseVector[Double] = {
     val mtrx = dataMatrix.transpose.table.map {
-      case (_, col) =>
-        val numDocs = col.count(_ != 0)
-        -Math.log10(numDocs / (dataMatrix.length + numDocs))
-    }
+      case (k, col) =>
+        val numDocs = col.count(_ != 0).toDouble
+          k -> -Math.log10(numDocs / (dataMatrix.length + numDocs))
+    }.toMap
 
-    SparseVector.fromVector(mtrx)
+    SparseVector(mtrx, dataMatrix.width)
   }
 
   def calcTFIDF(dataMatrix: SparseMatrix[Int],

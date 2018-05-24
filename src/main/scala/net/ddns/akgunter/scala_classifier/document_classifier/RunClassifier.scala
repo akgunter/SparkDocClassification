@@ -11,6 +11,7 @@ import net.ddns.akgunter.scala_classifier.lib._
 object RunClassifier {
 
   def main(args: Array[String]): Unit = {
+    /*
     val trainingDir = "./data/Training"
     val validationDir = "./data/Validation"
     val testingDir = "./data/Testing"
@@ -30,9 +31,6 @@ object RunClassifier {
     println("Building word index...")
     val wordIndex = WordIndex.fromDataSet(Array(trainingData, validationData).flatten)
 
-    println(calcTF(vectorize(trainingData.head, wordIndex)))
-
-    /*
     println("Building matrices...")
     val trainingMatrix = buildSparseMatrix(trainingData, wordIndex)
     val validationMatrix = buildSparseMatrix(validationData, wordIndex)
@@ -44,5 +42,25 @@ object RunClassifier {
     val validationProc = calcTFIDF(validationMatrix, idfVector)
     val testingProc = calcTFIDF(testingMatrix, idfVector)
     */
+
+
+    val testFilename = "./data/test_file.res"
+    val testData = DataPoint.fromFile(testFilename)
+    val testIndex = WordIndex.fromDataSet(Array(testData))
+
+    val testRow = vectorize(testData, testIndex)
+    val testMatrix = buildSparseMatrix(Array(testData), testIndex)
+
+    val tfRow = calcTF(testRow)
+    val idfVector = calcIDF(testMatrix)
+    val tfidfMatrix = calcTFIDF(testMatrix, idfVector)
+
+    println(testData)
+    println(testIndex.wordOrdering.mkString(", "))
+    println(testIndex.wordCounts)
+    println(testRow)
+    println(tfRow)
+    println(idfVector)
+    println(tfidfMatrix)
   }
 }
