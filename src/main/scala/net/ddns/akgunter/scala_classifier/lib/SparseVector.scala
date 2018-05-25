@@ -17,8 +17,8 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
 
   def sum: A = this.vector.values.sum
 
-  def map[B](f: (Int, A) => (Int, B)): SparseVector[B] = {
-    SparseVector(this.vector.map(f(_)), this.length)
+  def map[B: Numeric](f: A => B): SparseVector[B] = {
+    SparseVector(this.vector.mapValues(f), this.length)
   }
 
   def +(that: SparseVector[A]): SparseVector[A] = {
@@ -51,7 +51,7 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
 }
 
 object SparseVector {
-  def fromVector[A: Numeric](vector: Iterable[A]): SparseVector[A] = {
+  def fromVector[A: Numeric](vector: Seq[A]): SparseVector[A] = {
     val vectorMap = vector.zipWithIndex
       .filter {
         case (0, _) => false
