@@ -10,7 +10,7 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
     this.table.getOrElse(idx, SparseVector.empty[A](this.width))
   }
 
-  def map[B](f: (Int, A) => (Int, SparseVector[B])): SparseMatrix[B] = {
+  def map[B: Numeric](f: (Int, A) => (Int, SparseVector[B])): SparseMatrix[B] = {
     SparseMatrix(this.table.map(f(_)), this.shape)
   }
 
@@ -55,7 +55,7 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
 
 object SparseMatrix {
 
-  def fromMatrix[A: Numeric](array: Iterable[Iterable[A]]): SparseMatrix[A] = {
+  def fromMatrix[A: Numeric](array: Array[Array[A]]): SparseMatrix[A] = {
     val table = array.zipWithIndex
       .map {
       case(row, i) =>

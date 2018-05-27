@@ -16,8 +16,10 @@ object PreprocessingUtil {
   def buildSparseMatrix(dataSet: Array[DataPoint],
                                     wordIndex: WordIndex): SparseMatrix[Int] = {
 
-    val vectorList = dataSet.map(vectorize(_, wordIndex))
-    SparseMatrix.fromMatrix(vectorList)
+    val vectorList = dataSet.zipWithIndex.map {
+      case(v, i) => i -> vectorize(v, wordIndex)
+    }.toMap
+    SparseMatrix(vectorList, dataSet.length -> dataSet.head.length)
   }
 
   def calcTF(vector: SparseVector[Int]): SparseVector[Double] = {
@@ -36,10 +38,10 @@ object PreprocessingUtil {
     SparseVector(mtrx, dataMatrix.width)
   }
 
-  def calcTFIDF(dataMatrix: SparseMatrix[Int],
-                idfVector: SparseVector[Double]): SparseMatrix[Double] = {
+  def calcTFIDF(dataMatrix: SparseMatrix[Int]): SparseMatrix[Double] = {
 
     val tfMatrix = dataMatrix.table.map { case (k, v) => k -> calcTF(v) }
+    val idfVector = calcIDF(dataMatrix)
     val tfidfMatrix = tfMatrix.map { case (k, v) => k -> v * idfVector }.toMap
 
     SparseMatrix(tfidfMatrix, dataMatrix.shape)

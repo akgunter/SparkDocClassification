@@ -13,6 +13,8 @@ case class DataPoint(private val data: Map[String, Int]) {
     DataPoint(this.data |+| that.data)
   }
 
+  def length: Int = this.data.length
+
   override def toString(): String = this.data.toString
 }
 

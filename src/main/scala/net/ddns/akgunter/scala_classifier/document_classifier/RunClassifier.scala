@@ -53,7 +53,7 @@ object RunClassifier {
 
     val tfRow = calcTF(testRow)
     val idfVector = calcIDF(testMatrix)
-    val tfidfMatrix = calcTFIDF(testMatrix, idfVector)
+    val tfidfMatrix = calcTFIDF(testMatrix)
 
     println(testData)
     println(testIndex.wordOrdering.mkString(", "))
