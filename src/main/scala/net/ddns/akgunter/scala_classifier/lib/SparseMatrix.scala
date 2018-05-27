@@ -10,8 +10,8 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
     this.table.getOrElse(idx, SparseVector.empty[A](this.width))
   }
 
-  def map[B: Numeric](f: (Int, A) => (Int, SparseVector[B])): SparseMatrix[B] = {
-    SparseMatrix(this.table.map(f(_)), this.shape)
+  def map[B: Numeric](f: SparseVector[A] => SparseVector[B]): SparseMatrix[B] = {
+    SparseMatrix(this.table.mapValues(f), this.shape)
   }
 
   def transpose: SparseMatrix[A] = {
@@ -55,16 +55,20 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
 
 object SparseMatrix {
 
-  def fromMatrix[A: Numeric](array: Array[Array[A]]): SparseMatrix[A] = {
-    val table = array.zipWithIndex
-      .map {
-      case(row, i) =>
-        val sparseVector = SparseVector.fromVector(row)
-        i -> sparseVector
-    }.filter {
-      case(_, v) => v.keySet.nonEmpty
-    }.toMap
+  def fromMatrix[A: Numeric](array: Seq[Seq[A]]): SparseMatrix[A] = {
+    fromMatrix(array.map(SparseVector.fromVector))
+  }
 
-    SparseMatrix(table, array.size -> array.head.size)
+  def fromMatrix[A: Numeric](array: Seq[SparseVector[A]]): SparseMatrix[A] = {
+    val table = array
+      .zipWithIndex
+      .map {
+        case (row, i) => i -> row
+      }
+      .filter {
+        case (_, v) => v.keySet.nonEmpty
+      }.toMap
+
+    SparseMatrix(table, array.size -> array.head.length)
   }
 }
