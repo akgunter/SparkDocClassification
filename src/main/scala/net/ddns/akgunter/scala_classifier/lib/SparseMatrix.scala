@@ -56,19 +56,17 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
 object SparseMatrix {
 
   def fromMatrix[A: Numeric](array: Seq[Seq[A]]): SparseMatrix[A] = {
-    fromMatrix(array.map(SparseVector.fromVector))
+    fromSparseVectors(array.map(SparseVector.fromVector[A]))
   }
 
-  def fromMatrix[A: Numeric](array: Seq[SparseVector[A]]): SparseMatrix[A] = {
+  def fromSparseVectors[A: Numeric](array: Seq[SparseVector[A]]): SparseMatrix[A] = {
     val table = array
       .zipWithIndex
-      .map {
-        case (row, i) => i -> row
-      }
+      .map(_.swap)
       .filter {
-        case (_, v) => v.keySet.nonEmpty
+        case (_, v) => v.nonEmpty
       }.toMap
 
-    SparseMatrix(table, array.size -> array.head.length)
+    SparseMatrix(table, array.length -> array.head.length)
   }
 }

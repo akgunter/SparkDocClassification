@@ -15,6 +15,10 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
 
   def count(p: A => Boolean): Int = this.vector.values.count(p)
 
+  def isEmpty: Boolean = this.vector.isEmpty
+
+  def nonEmpty: Boolean = !this.isEmpty
+
   def sum: A = this.vector.values.sum
 
   def map[B: Numeric](f: A => B): SparseVector[B] = {

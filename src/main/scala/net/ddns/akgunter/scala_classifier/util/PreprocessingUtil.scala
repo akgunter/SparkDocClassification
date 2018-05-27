@@ -14,10 +14,10 @@ object PreprocessingUtil {
   }
 
   def buildSparseMatrix(dataSet: Array[DataPoint],
-                                    wordIndex: WordIndex): SparseMatrix[Int] = {
+                        wordIndex: WordIndex): SparseMatrix[Int] = {
 
     val vectorList = dataSet.map(vectorize(_, wordIndex))
-    SparseMatrix.fromMatrix(vectorList)
+    SparseMatrix.fromSparseVectors(vectorList)
   }
 
   def calcTF(vector: SparseVector[Int]): SparseVector[Double] = {
