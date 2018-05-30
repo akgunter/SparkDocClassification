@@ -19,7 +19,8 @@ object PreprocessingUtil {
     val vectorList = dataSet.zipWithIndex.map {
       case(v, i) => i -> vectorize(v, wordIndex)
     }.toMap
-    SparseMatrix(vectorList, dataSet.length -> dataSet.head.length)
+
+    SparseMatrix(vectorList, dataSet.length -> wordIndex.length)
   }
 
   def calcTF(vector: SparseVector[Int]): SparseVector[Double] = {

@@ -1,6 +1,9 @@
 package net.ddns.akgunter.scala_classifier.models
 
-case class WordIndex(wordCounts: DataPoint, wordOrdering: Array[String])
+case class WordIndex(wordCounts: DataPoint, wordOrdering: Array[String]) {
+
+  def length: Int = wordOrdering.length
+}
 
 object WordIndex {
   def fromDataSet(dataSet: Array[DataPoint]): WordIndex = {

@@ -55,20 +55,20 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
 
 object SparseMatrix {
 
-  def fromMatrix[A: Numeric](array: Seq[Seq[A]]): SparseMatrix[A] = {
-    fromMatrix(array.map(SparseVector.fromVector))
+  def fromMatrix[A: Numeric](matrix: Seq[Seq[A]]): SparseMatrix[A] = {
+    fromSparseVectors(matrix.map { v => SparseVector.fromVector(v) } )
   }
 
-  def fromMatrix[A: Numeric](array: Seq[SparseVector[A]]): SparseMatrix[A] = {
-    val table = array
+  def fromSparseVectors[A: Numeric](matrix: Seq[SparseVector[A]]): SparseMatrix[A] = {
+    val table = matrix
       .zipWithIndex
       .map {
-        case (row, i) => i -> row
+        case (v, i) => i -> v
       }
       .filter {
         case (_, v) => v.keySet.nonEmpty
       }.toMap
 
-    SparseMatrix(table, array.size -> array.head.length)
+    SparseMatrix(table, matrix.size -> matrix.head.length)
   }
 }

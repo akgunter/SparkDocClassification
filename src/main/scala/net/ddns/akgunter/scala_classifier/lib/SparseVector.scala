@@ -2,8 +2,6 @@ package net.ddns.akgunter.scala_classifier.lib
 
 import scala.math.Numeric
 
-import scala.collection.GenTraversableOnce
-
 case class SparseVector[A: Numeric](vector: Map[Int, A],
                                     length: Int) {
 
