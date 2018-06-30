@@ -38,7 +38,7 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
     SparseVector(sumVector, this.length max that.length)
   }
 
-  def *(that: SparseVector[A]): SparseVector[A] = {
+  def **(that: SparseVector[A]): SparseVector[A] = {
     assert(
       this.length == that.length,
       s"Vectors have different lengths ${this.length} and ${that.length}"
@@ -51,12 +51,37 @@ case class SparseVector[A: Numeric](vector: Map[Int, A],
     SparseVector(prodVector, this.length)
   }
 
-  override def toString: String = this.vector.toString
+  def *(that: SparseVector[A]): A = {
+    assert(
+      this.length == that.length,
+      s"Vectors have different lengths ${this.length} and ${that.length}"
+    )
+
+    (this.keySet & that.keySet).map {
+      k => implicitly[Numeric[A]].times(this(k), that(k))
+    }.sum
+  }
+
+  def *(scalar: A): SparseVector[A] = {
+    val newVector = this.vector.map{
+      case (k, v) => k -> implicitly[Numeric[A]].times(scalar, v)
+    }.toMap
+
+    SparseVector(newVector, this.length)
+  }
+
+  override def toString: String = {
+    val vectorStr = this.vector.keySet.toList.sorted.map {
+      k => k.toString + " -> " + this(k).toString
+    }.mkString(", ")
+
+    "SparseVector(" + vectorStr + ")"
+  }
 }
 
 object SparseVector {
 
-  def fromVector[A: Numeric](vector: Seq[A]): SparseVector[A] = {
+  def fromVector[A: Numeric](vector: Array[A]): SparseVector[A] = {
     val vectorMap = vector.zipWithIndex
       .filter {
         case (0, _) => false

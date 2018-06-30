@@ -1,17 +1,21 @@
 package net.ddns.akgunter.scala_classifier.document_classifier
 
-import scopt._
 
+import scala.util.Random
+
+import org.apache.spark.sql.SparkSession
+
+import net.ddns.akgunter.scala_classifier.lib.{SparseMatrix, SparseVector}
 import net.ddns.akgunter.scala_classifier.util.FileUtil._
 import net.ddns.akgunter.scala_classifier.util.PreprocessingUtil._
 import net.ddns.akgunter.scala_classifier.models.DataPoint
 import net.ddns.akgunter.scala_classifier.models.WordIndex
-import net.ddns.akgunter.scala_classifier.lib._
+import net.ddns.akgunter.scala_classifier.svm.CSVM
+import net.ddns.akgunter.scala_classifier.spark.CanSpark
 
-object RunClassifier {
+object RunClassifier extends CanSpark {
 
-  def main(args: Array[String]): Unit = {
-    /*
+  def dataProcessing(): Unit = {
     val trainingDir = "./data/Training"
     val validationDir = "./data/Validation"
     val testingDir = "./data/Testing"
@@ -41,9 +45,9 @@ object RunClassifier {
     val trainingProc = calcTFIDF(trainingMatrix, idfVector)
     val validationProc = calcTFIDF(validationMatrix, idfVector)
     val testingProc = calcTFIDF(testingMatrix, idfVector)
-    */
+  }
 
-
+  def dataProcessingOld(): Unit = {
     val testFilename = "./data/test_file.res"
     val testData = DataPoint.fromFile(testFilename)
     val testIndex = WordIndex.fromDataSet(Array(testData))
@@ -62,5 +66,39 @@ object RunClassifier {
     println(tfRow)
     println(idfVector)
     println(tfidfMatrix)
+  }
+
+  def CSVMTest(): Unit = {
+    val maxVal = 10
+    val d = 1
+    val numPoints = 10
+
+    val negPoints = Array.fill(numPoints / 2)(Array(Random.nextDouble(), Random.nextDouble() * (maxVal/2 - d)))
+    val posPoints = Array.fill(numPoints / 2)(Array(Random.nextDouble(), Random.nextDouble() * (maxVal/2 - d) + maxVal/2 + d))
+
+    val negLabels = negPoints.map(_ => "neg")
+    val posLabels = posPoints.map(_ => "pos")
+
+    val points = SparseMatrix.fromMatrix[Double](negPoints ++ posPoints)
+    val labels = negLabels ++ posLabels
+
+    val csvm = CSVM.fromData(points, labels)
+
+    println(points)
+    println(csvm.sampleWeights)
+  }
+
+  def dl4jTest(implicit spark: SparkSession): Unit = {
+
+  }
+
+
+  def main(args: Array[String]): Unit = {
+    val testArg = args(0)
+
+    if (testArg == "1") dataProcessing()
+    else if (testArg == "2") dataProcessingOld()
+    else if (testArg == "3") CSVMTest()
+    else if (testArg == "4") withSpark() { spark => dl4jTest(spark) }
   }
 }

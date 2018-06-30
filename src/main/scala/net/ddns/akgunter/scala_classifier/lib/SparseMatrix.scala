@@ -51,11 +51,22 @@ case class SparseMatrix[A: Numeric](table: Map[Int, SparseVector[A]],
     val newTable = this.table ++ newRows
     SparseMatrix(newTable, (this.length + that.length, this.width))
   }
+
+  def sum: SparseVector[A] = this.table.values.reduce(_ + _)
+
+  override def toString: String = {
+
+    val mtrxStr = this.table.keySet.toList.sorted.map {
+      k => "\t" + k.toString + " ->\t" + this(k).toString
+    }.mkString("\n")
+
+    "SparseMatrix(\n" + mtrxStr + "\n)"
+  }
 }
 
 object SparseMatrix {
 
-  def fromMatrix[A: Numeric](array: Seq[Seq[A]]): SparseMatrix[A] = {
+  def fromMatrix[A: Numeric](array: Array[Array[A]]): SparseMatrix[A] = {
     fromSparseVectors(array.map(SparseVector.fromVector[A]))
   }
 
