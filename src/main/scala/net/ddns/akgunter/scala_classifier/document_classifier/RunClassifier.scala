@@ -117,6 +117,9 @@ object RunClassifier extends CanSpark {
        """.stripMargin
     )
 
+    trainingDataVectorized.show(1)
+
+    /*
     logger.info("Training IDF transform...")
     val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_word_vector")
     val idfModel = idf.fit(vocabDataVectorized)
@@ -125,7 +128,7 @@ object RunClassifier extends CanSpark {
     val trainingTFIDF = idfModel.transform(trainingDataVectorized)
     val validationDataTFIDF = idfModel.transform(validationDataVectorized)
     val testingDataTFIDF = idfModel.transform(testingDataVectorized)
-
+  */
 
   }
 
