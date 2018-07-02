@@ -66,11 +66,12 @@ object FileUtil {
     val fList = {
       if (training) traverseLabeledDataFiles(baseDir)
       else traverseUnlabeledDataFiles(baseDir)
-    }.map(Tuple1.apply).toDF("path")
+    }.flatten
+      .map(Tuple1.apply)
+      .toDF("path")
 
-    fList.map {
-      pathRow =>
-        dataFrameFromFile(pathRow.getAs[String]("path"), training)
+    fList.as[String].map {
+      filePath => dataFrameFromFile(filePath, training)
     }.reduce(_ union _)
   }
 }

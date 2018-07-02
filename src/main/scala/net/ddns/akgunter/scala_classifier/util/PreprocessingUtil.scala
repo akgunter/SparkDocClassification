@@ -13,7 +13,7 @@ object PreprocessingUtil {
     SparseVector.fromVector(vector)
   }
 
-  def buildSparseMatrix(dataSet: Array[DataPoint],
+  def buildSparseMatrix(dataSet: Seq[DataPoint],
                         wordIndex: WordIndex): SparseMatrix[Int] = {
 
     val vectorList = dataSet.map(vectorize(_, wordIndex))
