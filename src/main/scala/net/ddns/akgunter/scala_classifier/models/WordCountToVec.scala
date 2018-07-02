@@ -103,10 +103,10 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
   }
 
   override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-    val index = input.getAs[Long]("index")
-    val count = input.getAs[Int]("count")
+    val index = input.getAs[Int](0)
+    val count = input.getAs[Int](1)
 
-    buffer.getAs[MMap[Int, Int]](0)(index.toInt) = count
+    buffer.getAs[MMap[Int, Int]](0)(index) = count
   }
 
   override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
