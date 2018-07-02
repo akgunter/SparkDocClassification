@@ -14,9 +14,8 @@ import net.ddns.akgunter.scala_classifier.svm.CSVM
 import net.ddns.akgunter.scala_classifier.spark.CanSpark
 
 object RunClassifier extends CanSpark {
-  val dataDir = "../ChenDocumentData/original/"
 
-  def dataProcessing(): Unit = {
+  def dataProcessing(dataDir: String): Unit = {
     val trainingDir = Paths.get(dataDir, "Training").toString
     val validationDir = Paths.get(dataDir, "Validation").toString
     val testingDir = Paths.get(dataDir, "Testing").toString
@@ -48,7 +47,7 @@ object RunClassifier extends CanSpark {
     val testingProc = calcTFIDF(testingMatrix, idfVector)
   }
 
-  def dataProcessingOld(): Unit = {
+  def dataProcessingOld(dataDir: String): Unit = {
     val testFilename = Paths.get(dataDir, "test_file.res").toAbsolutePath.toString
     val testData = DataPoint.fromFile(testFilename)
     val testIndex = WordIndex.fromDataSet(Array(testData))
@@ -69,7 +68,7 @@ object RunClassifier extends CanSpark {
     println(tfidfMatrix)
   }
 
-  def CSVMTest(): Unit = {
+  def CSVMTest(dataDir: String): Unit = {
     val maxVal = 10
     val d = 1
     val numPoints = 10
@@ -89,20 +88,20 @@ object RunClassifier extends CanSpark {
     println(csvm.sampleWeights)
   }
 
-  def dl4jTest(implicit spark: SparkSession): Unit = {
+  def dl4jTest(dataDir: String)(implicit spark: SparkSession): Unit = {
 
   }
 
 
   def main(args: Array[String]): Unit = {
-    println(s"${args.toArray.mkString("\n")}")
-    val testArg = args(0)
-    println(s"Argument: $testArg")
+    val dataDir = args(0)
+    val testArg = args(1)
+    println(s"Running test $testArg in dataDir=$dataDir")
 
-    if (testArg == "1") dataProcessing()
-    else if (testArg == "2") dataProcessingOld()
-    else if (testArg == "3") CSVMTest()
-    else if (testArg == "4") withSpark() { spark => dl4jTest(spark) }
+    if (testArg == "1") dataProcessing(dataDir)
+    else if (testArg == "2") dataProcessingOld(dataDir)
+    else if (testArg == "3") CSVMTest(dataDir)
+    else if (testArg == "4") withSpark() { spark => dl4jTest(dataDir)(spark) }
     else println("Argument not recognized")
   }
 }
