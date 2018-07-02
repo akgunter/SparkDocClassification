@@ -95,9 +95,9 @@ object RunClassifier extends CanSpark {
     val testingDir = Paths.get(dataDir, "Testing").toString
 
     logger.info("Loading data...")
-    val trainingData = dataFrameFromDir(trainingDir, training = true)
-    val validationData = dataFrameFromDir(validationDir, training = true)
-    val testingData = dataFrameFromDir(testingDir, training = false)
+    val trainingData = dataFrameFromDirectory(trainingDir, training = true)
+    val validationData = dataFrameFromDirectory(validationDir, training = true)
+    val testingData = dataFrameFromDirectory(testingDir, training = false)
 
     logger.info(
       s"""Loaded:\n
