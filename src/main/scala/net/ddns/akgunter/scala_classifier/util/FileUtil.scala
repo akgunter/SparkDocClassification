@@ -1,13 +1,14 @@
 package net.ddns.akgunter.scala_classifier.util
 
 import java.io.File
+import java.nio.file.Paths
 import scala.util.matching.Regex
 
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 
 object FileUtil {
-  val labelPattern: Regex = "class[A-Z]*".r
+  val labelPattern: String = "class[A-Z]*"
 
   final val fileSchema: StructType = new StructType()
     .add("word", StringType)
@@ -17,6 +18,16 @@ object FileUtil {
     new File(baseDir)
       .listFiles
       .filter { f => f.isFile && f.getName.endsWith(".res") }
+      .map(_.toString)
+  }
+
+  def getLabelDirectories(baseDir: String): Seq[String] = {
+    new File(baseDir)
+      .listFiles
+      .filter {
+        name =>
+          name.isDirectory && labelPattern.r.findFirstIn(name.getName).isDefined
+      }
       .map(_.toString)
   }
 
@@ -34,7 +45,7 @@ object FileUtil {
   }
 
   def getLabelFromFilePath(filePath: String): String = {
-    val foundPattern = labelPattern.findFirstIn(filePath)
+    val foundPattern = labelPattern.r.findFirstIn(filePath)
 
     foundPattern match {
       case Some(v) => v
@@ -42,8 +53,8 @@ object FileUtil {
     }
   }
 
-  def dataFrameFromFile(filePath: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import org.apache.spark.sql.functions.lit
+  def loadChenCSV(filePath: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
+    import org.apache.spark.sql.functions.{input_file_name, lit}
 
     println(s"Loading file $filePath")
 
@@ -52,7 +63,7 @@ object FileUtil {
       .option("mode", "DROPMALFORMED")
       .option("delimiter", " ")
       .csv(filePath)
-      .withColumn("input_file", lit(filePath))
+      .withColumn("input_file", input_file_name)
 
     if (training)
       df.withColumn("label", lit(getLabelFromFilePath(filePath)))
@@ -60,16 +71,27 @@ object FileUtil {
       df
   }
 
-  def dataFrameFromDir(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def dataFrameFromDirectory(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
+    import org.apache.spark.sql.functions.{col, input_file_name, udf}
 
-    val fList = {
-      if (training) traverseLabeledDataFiles(baseDir)
-      else traverseUnlabeledDataFiles(baseDir)
-    }.map(Tuple1.apply).toDF("path")
+    val dirPattern = {
+      if (training)
+        Paths.get(baseDir, labelPattern).toString
+      else
+        baseDir
+    }
 
-    fList.as[String].map {
-      filePath => dataFrameFromFile(filePath, training)
-    }.reduce(_ union _)
-  }
+    val df = spark.read
+      .schema(fileSchema)
+      .option("mode", "DROPMALFORMED")
+      .option("delimiter", " ")
+      .csv(dirPattern)
+      .withColumn("input_file", input_file_name)
+
+    if (training) {
+      val getLabel = udf((path: String) => getLabelFromFilePath(path))
+      df.withColumn("label", getLabel(col("input_file")))
+    }
+    else
+      df
 }
