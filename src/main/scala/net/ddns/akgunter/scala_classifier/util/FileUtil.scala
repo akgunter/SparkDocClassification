@@ -13,14 +13,14 @@ object FileUtil {
     .add("word", StringType)
     .add("count", IntegerType)
 
-  def getDataFiles(baseDir: String): Array[String] = {
+  def getDataFiles(baseDir: String): Seq[String] = {
     new File(baseDir)
       .listFiles
       .filter { f => f.isFile && f.getName.endsWith(".res") }
       .map(_.toString)
   }
 
-  def traverseLabeledDataFiles(baseDir: String): Array[String] = {
+  def traverseLabeledDataFiles(baseDir: String): Seq[String] = {
     val subdirs = new File(baseDir)
       .listFiles
       .filter(_.isDirectory)
@@ -29,7 +29,7 @@ object FileUtil {
     subdirs.flatMap(getDataFiles)
   }
 
-  def traverseUnlabeledDataFiles(baseDir: String): Array[String] = {
+  def traverseUnlabeledDataFiles(baseDir: String): Seq[String] = {
     getDataFiles(baseDir)
   }
 
@@ -61,14 +61,16 @@ object FileUtil {
   }
 
   def dataFrameFromDir(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
     val fList = {
       if (training) traverseLabeledDataFiles(baseDir)
       else traverseUnlabeledDataFiles(baseDir)
-    }
+    }.map(Tuple1.apply).toDF("path")
 
     fList.map {
-      filePath =>
-        dataFrameFromFile(filePath, training)
+      pathRow =>
+        dataFrameFromFile(pathRow.getAs[String]("path"), training)
     }.reduce(_ union _)
   }
 }
