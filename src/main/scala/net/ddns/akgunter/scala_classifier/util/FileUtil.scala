@@ -92,6 +92,6 @@ object FileUtil {
       val getLabel = udf((path: String) => getLabelFromFilePath(path))
       df.withColumn("label", getLabel(col("input_file")))
     }
-    else
-      df
+    else df
+  }
 }
