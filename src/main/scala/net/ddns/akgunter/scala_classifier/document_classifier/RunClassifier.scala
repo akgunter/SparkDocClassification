@@ -1,6 +1,6 @@
 package net.ddns.akgunter.scala_classifier.document_classifier
 
-
+import java.nio.file.Paths
 import scala.util.Random
 
 import org.apache.spark.sql.SparkSession
@@ -14,11 +14,12 @@ import net.ddns.akgunter.scala_classifier.svm.CSVM
 import net.ddns.akgunter.scala_classifier.spark.CanSpark
 
 object RunClassifier extends CanSpark {
+  val dataDir = "../ChenDocumentData/original/"
 
   def dataProcessing(): Unit = {
-    val trainingDir = "./data/Training"
-    val validationDir = "./data/Validation"
-    val testingDir = "./data/Testing"
+    val trainingDir = Paths.get(dataDir, "Training").toString
+    val validationDir = Paths.get(dataDir, "Validation").toString
+    val testingDir = Paths.get(dataDir, "Testing").toString
 
     println("Loading data...")
     val trainingFilenames = traverseLabeledDataFiles(trainingDir)
@@ -48,7 +49,7 @@ object RunClassifier extends CanSpark {
   }
 
   def dataProcessingOld(): Unit = {
-    val testFilename = "./data/test_file.res"
+    val testFilename = Paths.get(dataDir, "test_file.res").toString
     val testData = DataPoint.fromFile(testFilename)
     val testIndex = WordIndex.fromDataSet(Array(testData))
 
