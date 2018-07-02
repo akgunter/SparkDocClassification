@@ -1,17 +1,18 @@
 package net.ddns.akgunter.scala_classifier.document_classifier
 
+import java.io.File
 import java.nio.file.Paths
 import scala.util.Random
 
 import org.apache.spark.sql.SparkSession
 
-import net.ddns.akgunter.scala_classifier.lib.{SparseMatrix, SparseVector}
-import net.ddns.akgunter.scala_classifier.util.FileUtil._
-import net.ddns.akgunter.scala_classifier.util.PreprocessingUtil._
+import net.ddns.akgunter.scala_classifier.lib.SparseMatrix
 import net.ddns.akgunter.scala_classifier.models.DataPoint
 import net.ddns.akgunter.scala_classifier.models.WordIndex
-import net.ddns.akgunter.scala_classifier.svm.CSVM
 import net.ddns.akgunter.scala_classifier.spark.CanSpark
+import net.ddns.akgunter.scala_classifier.svm.CSVM
+import net.ddns.akgunter.scala_classifier.util.FileUtil._
+import net.ddns.akgunter.scala_classifier.util.PreprocessingUtil._
 
 object RunClassifier extends CanSpark {
 
@@ -89,7 +90,14 @@ object RunClassifier extends CanSpark {
   }
 
   def dl4jTest(dataDir: String)(implicit spark: SparkSession): Unit = {
+    val trainingDir = Paths.get(dataDir, "Training").toString
+    val validationDir = Paths.get(dataDir, "Validation").toString
+    val testingDir = Paths.get(dataDir, "Testing").toString
 
+    logger.info("Loading data...")
+    val trainingData = dataFrameFromDir(trainingDir, training = true)
+    val validationData = dataFrameFromDir(validationDir, training = true)
+    val testingData = dataFrameFromDir(testingDir, training = false)
   }
 
 

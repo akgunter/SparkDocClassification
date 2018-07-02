@@ -1,8 +1,5 @@
 package net.ddns.akgunter.scala_classifier.util
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.ml.linalg.{Vectors, Vector}
-
 import net.ddns.akgunter.scala_classifier.lib._
 import net.ddns.akgunter.scala_classifier.models.DataPoint
 import net.ddns.akgunter.scala_classifier.models.WordIndex

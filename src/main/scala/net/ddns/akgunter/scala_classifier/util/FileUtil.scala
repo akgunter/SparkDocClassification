@@ -1,12 +1,14 @@
 package net.ddns.akgunter.scala_classifier.util
 
 import java.io.File
+import scala.util.matching.Regex
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
-import org.apache.spark.ml.linalg.{Vector, Vectors, VectorUDT}
 
 object FileUtil {
+  val labelPattern: Regex = "class[A-Z]*".r
+
   final val fileSchema: StructType = new StructType()
     .add("word", StringType)
     .add("count", IntegerType)
@@ -32,7 +34,7 @@ object FileUtil {
   }
 
   def getLabelFromFilePath(filePath: String): String = {
-    val foundPattern = "class[A-Z]*".r.findFirstIn(filePath)
+    val foundPattern = labelPattern.findFirstIn(filePath)
 
     foundPattern match {
       case Some(v) => v
