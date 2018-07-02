@@ -3,7 +3,7 @@ package net.ddns.akgunter.scala_classifier.util
 import java.io.File
 import scala.util.matching.Regex
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 
 object FileUtil {
@@ -66,9 +66,7 @@ object FileUtil {
     val fList = {
       if (training) traverseLabeledDataFiles(baseDir)
       else traverseUnlabeledDataFiles(baseDir)
-    }.flatten
-      .map(Tuple1.apply)
-      .toDF("path")
+    }.map(Tuple1.apply).toDF("path")
 
     fList.as[String].map {
       filePath => dataFrameFromFile(filePath, training)
