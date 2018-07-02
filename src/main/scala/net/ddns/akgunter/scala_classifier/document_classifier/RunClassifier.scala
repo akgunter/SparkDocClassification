@@ -94,11 +94,14 @@ object RunClassifier extends CanSpark {
 
 
   def main(args: Array[String]): Unit = {
+    println("TESTING")
+
     val testArg = args(0)
 
     if (testArg == "1") dataProcessing()
     else if (testArg == "2") dataProcessingOld()
     else if (testArg == "3") CSVMTest()
     else if (testArg == "4") withSpark() { spark => dl4jTest(spark) }
+    else println("Argument not recognized")
   }
 }
