@@ -76,7 +76,7 @@ object FileUtil {
 
     val dirPattern = {
       if (training)
-        Paths.get(baseDir, labelPattern).toString
+        Paths.get(baseDir, labelPattern + "/*.res").toString
       else
         baseDir
     }
