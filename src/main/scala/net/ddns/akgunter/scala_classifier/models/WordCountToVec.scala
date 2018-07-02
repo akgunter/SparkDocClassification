@@ -116,7 +116,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
     val map2 = buffer2.getAs[Map[Int, Int]](0)
 
     buffer1(0) = map1 ++ map2.map {
-      case (k, v) => map1.getOrElse(k, 0) + v
+      case (k, v) => k -> (map1.getOrElse(k, 0) + v)
     }
   }
 
