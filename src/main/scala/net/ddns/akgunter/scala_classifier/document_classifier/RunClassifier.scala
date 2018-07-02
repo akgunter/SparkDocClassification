@@ -49,7 +49,7 @@ object RunClassifier extends CanSpark {
   }
 
   def dataProcessingOld(): Unit = {
-    val testFilename = Paths.get(dataDir, "test_file.res").toString
+    val testFilename = Paths.get(dataDir, "test_file.res").toAbsolutePath.toString
     val testData = DataPoint.fromFile(testFilename)
     val testIndex = WordIndex.fromDataSet(Array(testData))
 
