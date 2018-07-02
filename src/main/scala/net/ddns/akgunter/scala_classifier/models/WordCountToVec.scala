@@ -9,7 +9,7 @@ import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAg
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 
-import scala.collection.mutable.{Map => MMap}
+//import scala.collection.mutable.{Map => MMap}
 
 class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecModel] {
 
@@ -99,29 +99,29 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
   override def deterministic: Boolean = true
 
   override def initialize(buffer: MutableAggregationBuffer): Unit = {
-    buffer(0) = MMap.empty[Int, Int]
+    buffer(0) = Map.empty[Int, Int] withDefaultValue 0
   }
 
   override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
     val index = input.getAs[Int](0)
     val count = input.getAs[Int](1)
 
-    buffer.getAs[MMap[Int, Int]](0)(index) = count
+    val idxMap = buffer.getAs[Map[Int, Int]](0)
+
+    buffer(0) = idxMap + (index -> count)
   }
 
   override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {
-    val map1 = buffer1.getAs[MMap[Int, Int]](0)
-    val map2 = buffer2.getAs[MMap[Int, Int]](0)
+    val map1 = buffer1.getAs[Map[Int, Int]](0)
+    val map2 = buffer2.getAs[Map[Int, Int]](0)
 
-    map2.foreach {
-      case (idx, count) =>
-        if (map1.contains(idx)) map1(idx) += count
-        else map1(idx) = count
+    buffer1(0) = map1 ++ map2.map {
+      case (k, v) => map1(k) + v
     }
   }
 
   override def evaluate(buffer: Row): Any = {
-    val idxCountMap = buffer.getAs[MMap[Int, Int]](0)
+    val idxCountMap = buffer.getAs[Map[Int, Int]](0)
 
     val idxList = idxCountMap.keySet
       .toArray
