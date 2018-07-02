@@ -15,7 +15,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
 
   def this() = this(Identifiable.randomUID("wctv"))
 
-  protected def getVocabOrdering(dataset: Dataset[_]): Dataset[_] = {
+  protected def getVocabOrdering(dataset: Dataset[_]): DataFrame = {
     import org.apache.spark.sql.functions.monotonically_increasing_id
 
     dataset.select("word")
@@ -34,11 +34,9 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
     )
 
     val ordering = getVocabOrdering(dataset)
-    val maxIndex = ordering
-      .select(max("index"))
-      .collect()
-      .head
-      .getAs[Long]("index")
+    val maxIndex = ordering.agg(max("index"))
+      .head()
+      .getLong(0)
 
     new WordCountToVecModel(ordering, maxIndex)
       .setParent(this)
