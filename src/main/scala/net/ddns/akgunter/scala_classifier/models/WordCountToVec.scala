@@ -99,7 +99,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
   override def deterministic: Boolean = true
 
   override def initialize(buffer: MutableAggregationBuffer): Unit = {
-    buffer(0) = Map.empty[Int, Int] withDefaultValue 0
+    buffer(0) = Map.empty[Int, Int]
   }
 
   override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
@@ -116,7 +116,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
     val map2 = buffer2.getAs[Map[Int, Int]](0)
 
     buffer1(0) = map1 ++ map2.map {
-      case (k, v) => map1(k) + v
+      case (k, v) => map1.getOrElse(k, 0) + v
     }
   }
 
