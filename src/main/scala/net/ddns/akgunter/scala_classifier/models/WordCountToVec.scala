@@ -1,15 +1,15 @@
 package net.ddns.akgunter.scala_classifier.models
 
-import scala.collection.mutable.{Map => MMap}
-
-import org.apache.spark.ml.{Estimator, Model}
-import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.ml.linalg.SparseVector
+import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+
+import scala.collection.mutable.{Map => MMap}
 
 class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecModel] {
 
@@ -93,7 +93,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
   override def dataType: DataType = {
     new StructType()
       .add("input_file", StringType)
-      .add("vector", VectorType)
+      .add("raw_word_vector", VectorType)
   }
 
   override def deterministic: Boolean = true

@@ -1,13 +1,13 @@
 package net.ddns.akgunter.scala_classifier.document_classifier
 
-import java.io.File
 import java.nio.file.Paths
+
+import org.apache.spark.ml.feature.IDF
+
 import scala.util.Random
-
 import org.apache.spark.sql.SparkSession
-
 import net.ddns.akgunter.scala_classifier.lib.SparseMatrix
-import net.ddns.akgunter.scala_classifier.models._
+import net.ddns.akgunter.scala_classifier.models.{WordCountToVec, _}
 import net.ddns.akgunter.scala_classifier.spark.CanSpark
 import net.ddns.akgunter.scala_classifier.svm.CSVM
 import net.ddns.akgunter.scala_classifier.util.FileUtil._
@@ -97,15 +97,17 @@ object RunClassifier extends CanSpark {
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
     val validationData = dataFrameFromDirectory(validationDir, training = true)
     val testingData = dataFrameFromDirectory(testingDir, training = false)
+    val vocabData = trainingData union validationData
 
     logger.info("Creating vectorizer")
     val wordVectorizer = new WordCountToVec()
-    val wordVectorizerModel = wordVectorizer.fit(trainingData union validationData)
+    val wordVectorizerModel = wordVectorizer.fit(vocabData)
 
     logger.info("Vectorizing data")
-    val trainingDataVectorized = wordVectorizerModel.transform(trainingData)
-    val validationDataVectorized = wordVectorizerModel.transform(validationData)
-    val testingDataVectorized = wordVectorizerModel.transform(testingData)
+    val trainingDataVectorized = wordVectorizerModel.transform(trainingData).persist
+    val validationDataVectorized = wordVectorizerModel.transform(validationData).persist
+    val testingDataVectorized = wordVectorizerModel.transform(testingData).persist
+    val vocabDataVectorized = trainingDataVectorized union validationDataVectorized
 
     logger.info(
       s"""Vectorized files:
@@ -114,6 +116,15 @@ object RunClassifier extends CanSpark {
          |\t${testingDataVectorized.count} testing files
        """.stripMargin
     )
+
+    val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_word_vector")
+    val idfModel = idf.fit(vocabDataVectorized)
+
+    val trainingTFIDF = idfModel.transform(trainingDataVectorized)
+    val validationDataTFIDF = idfModel.transform(validationDataVectorized)
+    val testingDataTFIDF = idfModel.transform(testingDataVectorized)
+
+
   }
 
 
