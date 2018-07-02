@@ -7,8 +7,7 @@ import scala.util.Random
 import org.apache.spark.sql.SparkSession
 
 import net.ddns.akgunter.scala_classifier.lib.SparseMatrix
-import net.ddns.akgunter.scala_classifier.models.DataPoint
-import net.ddns.akgunter.scala_classifier.models.WordIndex
+import net.ddns.akgunter.scala_classifier.models._
 import net.ddns.akgunter.scala_classifier.spark.CanSpark
 import net.ddns.akgunter.scala_classifier.svm.CSVM
 import net.ddns.akgunter.scala_classifier.util.FileUtil._
@@ -100,11 +99,16 @@ object RunClassifier extends CanSpark {
     val testingData = dataFrameFromDirectory(testingDir, training = false)
 
     logger.info(
-      s"""Loaded:\n
+      s"""Loaded:
          |\t${trainingData.count} training records
          |\t${validationData.count} validation records
          |\t${testingData.count} testing records
        """.stripMargin)
+
+    val wordVectorizer = new WordCountToVec()
+    val wordVectorizerModel = wordVectorizer.fit(trainingData)
+
+    val trainingDataVectorized = wordVectorizerModel.transform(trainingData)
   }
 
 
