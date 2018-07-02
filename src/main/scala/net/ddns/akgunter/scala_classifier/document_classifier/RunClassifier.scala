@@ -96,6 +96,7 @@ object RunClassifier extends CanSpark {
   def main(args: Array[String]): Unit = {
     println(s"${args.toArray.mkString("\n")}")
     val testArg = args(0)
+    println(s"Argument: $testArg")
 
     if (testArg == "1") dataProcessing()
     else if (testArg == "2") dataProcessingOld()
