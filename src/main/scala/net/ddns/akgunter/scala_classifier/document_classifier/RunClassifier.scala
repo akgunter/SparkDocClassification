@@ -98,13 +98,6 @@ object RunClassifier extends CanSpark {
     val validationData = dataFrameFromDirectory(validationDir, training = true)
     val testingData = dataFrameFromDirectory(testingDir, training = false)
 
-    logger.info(
-      s"""Loaded:
-         |\t${trainingData.count} training records
-         |\t${validationData.count} validation records
-         |\t${testingData.count} testing records
-       """.stripMargin)
-
     val wordVectorizer = new WordCountToVec()
     val wordVectorizerModel = wordVectorizer.fit(trainingData union validationData)
 
