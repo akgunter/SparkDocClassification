@@ -98,6 +98,13 @@ object RunClassifier extends CanSpark {
     val trainingData = dataFrameFromDir(trainingDir, training = true)
     val validationData = dataFrameFromDir(validationDir, training = true)
     val testingData = dataFrameFromDir(testingDir, training = false)
+
+    logger.info(
+      s"""Loaded:\n
+         |\t${trainingData.count} training records
+         |\t${validationData.count} validation records
+         |\t${testingData.count} testing records
+       """.stripMargin)
   }
 
 

@@ -45,6 +45,8 @@ object FileUtil {
   def dataFrameFromFile(filePath: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
     import org.apache.spark.sql.functions.lit
 
+    println(s"Loading file $filePath")
+
     val df = spark.read
       .schema(fileSchema)
       .option("mode", "DROPMALFORMED")
