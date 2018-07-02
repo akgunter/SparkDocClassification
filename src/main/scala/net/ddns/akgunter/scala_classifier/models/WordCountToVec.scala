@@ -87,7 +87,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
 
   override def bufferSchema: StructType = {
     new StructType()
-      .add("map", MapType(LongType, IntegerType))
+      .add("map", MapType(IntegerType, IntegerType))
   }
 
   override def dataType: DataType = {
