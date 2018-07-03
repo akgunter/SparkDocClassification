@@ -38,7 +38,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
       .head()
       .getLong(0)
 
-    println(s"Max key $maxIndex")
+    ordering.select("word", "index").where("index == max(index)").show(truncate = false)
 
     new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
@@ -69,14 +69,15 @@ class WordCountToVecModel protected (
       s"Dataset is missing required column(s): ${requiredColumns.diff(inputColumns).mkString(", ")}"
     )
 
+    println(s"Dictionary Size: $dictionarySize")
+
     val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
     dataset.join(ordering, "word")
       .select("input_file", "index", "count")
-      //.groupBy("input_file")
-      //.agg(fileRowVectorizer(col("index"), col("count")))
-      .select(max("index")).show(truncate = false)
+      .groupBy("input_file")
+      .agg(fileRowVectorizer(col("index"), col("count")))
 
-    dataset.select("input_file", "index", "count")
+    dataset.join(ordering, "word")
   }
 
   override def transformSchema(schema: StructType): StructType = ???
