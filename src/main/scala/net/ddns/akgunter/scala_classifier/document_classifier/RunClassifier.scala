@@ -130,6 +130,8 @@ object RunClassifier extends CanSpark {
     val validationDataTFIDF = idfModel.transform(validationDataVectorized)
     val testingDataTFIDF = idfModel.transform(testingDataVectorized)
 
+    logger.info(s"Columns: ${trainingDataTFIDF.columns.mkString(" ")}")
+
     logger.info("Constructing MLP classifier...")
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(wordVectorizerModel.getDictionarySize.toInt, numClasses))
