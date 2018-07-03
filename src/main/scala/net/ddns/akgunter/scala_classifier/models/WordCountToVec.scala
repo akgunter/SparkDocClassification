@@ -7,7 +7,7 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 //import scala.collection.mutable.{Map => MMap}
 
@@ -16,16 +16,18 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
   def this() = this(Identifiable.randomUID("wctv"))
 
   protected def getVocabOrdering(dataset: Dataset[_]): DataFrame = {
-    val orderingRDD = dataset.select("word")
-      .distinct
-      .rdd
-      .zipWithIndex
-      .map(row => Row(row._1, row._2))
+    val wordSet = dataset.select("word")
 
-    val schema = new StructType()
-        .add("word", StringType)
-        .add("index", LongType)
-    dataset.sparkSession.createDataFrame(orderingRDD, schema)
+    dataset.sparkSession.createDataFrame(
+      wordSet
+        .distinct
+        .rdd
+        .zipWithIndex
+        .map { case (row, idx) =>
+          Row.fromSeq(row.toSeq :+ idx)
+        },
+      wordSet.schema.add("index", LongType)
+    )
   }
 
   override def fit(dataset: Dataset[_]): WordCountToVecModel = {
