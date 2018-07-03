@@ -76,7 +76,7 @@ class WordCountToVecModel protected (
       //.agg(fileRowVectorizer(col("index"), col("count")))
       .select(max("index")).show(truncate = false)
 
-    dataset.as[Row]
+    dataset.select("input_file", "index", "count")
   }
 
   override def transformSchema(schema: StructType): StructType = ???
