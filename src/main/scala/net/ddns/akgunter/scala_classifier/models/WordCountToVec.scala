@@ -78,7 +78,7 @@ class WordCountToVecModel protected (
     dataset.join(ordering, "word")
       .select("input_file", "index", "count")
       .groupBy("input_file")
-      .agg(fileRowVectorizer(col("index"), col("count")))
+      .agg(fileRowVectorizer(col("index"), col("count")) as "raw_word_vector")
   }
 
   override def transformSchema(schema: StructType): StructType = ???
@@ -97,8 +97,7 @@ class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction
       .add("map", MapType(IntegerType, IntegerType))
   }
 
-  override def dataType: DataType = new StructType()
-    .add("raw_word_vector", VectorType)
+  override def dataType: DataType = VectorType
 
   override def deterministic: Boolean = true
 
@@ -141,7 +140,6 @@ class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction
         case (_, count) => count.toDouble
       }
 
-    val vector = new SparseVector(dictionarySize, idxList, countList)
-    Row.fromSeq(Seq(vector))
+    new SparseVector(dictionarySize, idxList, countList)
   }
 }
