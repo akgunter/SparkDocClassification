@@ -78,7 +78,7 @@ class WordCountToVecModel protected (
 }
 
 
-class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
+class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction {
   override def inputSchema: StructType = {
     new StructType()
       .add("index", IntegerType)
@@ -133,6 +133,8 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
         case (_, count) => count.toDouble
       }
 
-    new SparseVector(maxIndex, idxList, countList)
+    println(s"TEST: $dictionarySize, ${idxList.max}")
+
+    new SparseVector(dictionarySize, idxList, countList)
   }
 }
