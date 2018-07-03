@@ -114,7 +114,7 @@ object RunClassifier extends CanSpark {
       .setOutputCol("chi_sel_features")
       .setNumTopFeatures(8000)
     val mlpc = new MultilayerPerceptronClassifier()
-      .setLayers(Array(pca.getK, numClasses))
+      .setLayers(Array(chiSel.getNumTopFeatures, numClasses))
       .setMaxIter(100)
       .setBlockSize(20)
       .setFeaturesCol("chi_sel_features")
