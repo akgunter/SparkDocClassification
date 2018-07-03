@@ -116,7 +116,6 @@ class WordCountToVec(override val uid: String)
   }
 }
 
-
 class WordCountToVecModel protected (
     protected val ordering: Dataset[_],
     protected val dictionarySize: Long,
@@ -124,7 +123,7 @@ class WordCountToVecModel protected (
   extends Model[WordCountToVecModel]
   with WordCountToVecParams {
 
-  protected def this(ordering: Dataset[_], maxIndex: Long) = {
+  protected[models] def this(ordering: Dataset[_], maxIndex: Long) = {
     this(ordering, maxIndex, Identifiable.randomUID("WordCountToVecModel"))
   }
 
@@ -214,7 +213,7 @@ class VectorizeFileRow protected (
   extends UserDefinedAggregateFunction
   with VectorizeFileRowParams {
 
-  protected def this(dictionarySize: Int) = {
+  protected[models] def this(dictionarySize: Int) = {
     this(dictionarySize, Identifiable.randomUID("VectorizeFileRow"))
   }
 
