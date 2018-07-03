@@ -16,13 +16,16 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
   def this() = this(Identifiable.randomUID("wctv"))
 
   protected def getVocabOrdering(dataset: Dataset[_]): DataFrame = {
-    import dataset.sparkSession.implicits._
-
-    dataset.select("word")
+    val orderingRDD = dataset.select("word")
       .distinct
       .rdd
       .zipWithIndex
-      .toDF("word", "index")
+      .map(row => Row(row(0), row(1)))
+
+    val schema = new StructType()
+        .add("word", StringType)
+        .add("index", LongType)
+    dataset.sparkSession.createDataFrame(orderingRDD, schema)
   }
 
   override def fit(dataset: Dataset[_]): WordCountToVecModel = {
