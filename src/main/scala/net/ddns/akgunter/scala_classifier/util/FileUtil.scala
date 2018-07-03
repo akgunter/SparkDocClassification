@@ -8,7 +8,8 @@ import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 
 object FileUtil {
-  val labelPattern: String = "class[A-Z]*"
+  val labelPrefix: String = "class"
+  val labelPattern: String = s"$labelPrefix[A-Z]*"
 
   def getDataFiles(baseDir: String): Seq[String] = {
     new File(baseDir)
@@ -44,9 +45,19 @@ object FileUtil {
     val foundPattern = labelPattern.r.findFirstIn(filePath)
 
     foundPattern match {
-      case Some(v) => v
+      case Some(v) => v.substring(labelPrefix.length)
       case None => throw new IllegalArgumentException(s"File path $filePath is unlabelled")
     }
+  }
+
+  def labelToInt(label: String): Int = {
+    label.map(_.toInt - 'A'.toInt)
+      .zipWithIndex
+      .map {
+        case (ord, idx) =>
+          ord * math.pow(26, idx).toInt
+      }
+      .sum
   }
 
   def dataFrameFromDirectory(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
@@ -76,8 +87,10 @@ object FileUtil {
       .withColumn("input_file", input_file_name)
 
     if (training) {
-      val getLabel = udf((path: String) => getLabelFromFilePath(path))
-      df.withColumn("label", getLabel(col("input_file")))
+      val getLabelStr = udf((path: String) => getLabelFromFilePath(path))
+      val getLabel = udf((labelStr: String) => labelToInt(labelStr))
+      df.withColumn("label_str", getLabelStr(col("input_file")))
+        .withColumn("label", getLabel(col("label_str")))
     }
     else df
   }

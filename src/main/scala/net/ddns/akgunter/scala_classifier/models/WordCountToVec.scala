@@ -78,7 +78,7 @@ class WordCountToVecModel protected (
 
     val groupByColumns = {
       if (dataset.columns.contains("label"))
-        List("input_file", "label")
+        List("input_file", "label", "label_str")
       else
         List("input_file")
     }.map(new Column(_))
