@@ -117,7 +117,7 @@ object RunClassifier extends CanSpark {
       .setLayers(Array(pca.getK, numClasses))
       .setMaxIter(100)
       .setBlockSize(20)
-      .setFeaturesCol("pca_vector")
+      .setFeaturesCol("chi_sel_features")
 
     val pipeline = new Pipeline()
         .setStages(Array(wordVectorizer, idf, chiSel, mlpc))
