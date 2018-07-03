@@ -9,7 +9,6 @@ import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAg
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
 
-//import scala.collection.mutable.{Map => MMap}
 
 class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecModel] {
 
@@ -33,13 +32,6 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
   override def fit(dataset: Dataset[_]): WordCountToVecModel = {
     import org.apache.spark.sql.functions.max
 
-    val requiredColumns = Set("input_file", "word", "count")
-    val inputColumns = dataset.columns.toSet
-    require(
-      requiredColumns.forall(inputColumns),
-      s"Dataset is missing required column(s): ${requiredColumns.diff(inputColumns).mkString(", ")}"
-    )
-
     val ordering = getVocabOrdering(dataset)
     val maxIndex = ordering.agg(max("index"))
       .head()
@@ -51,7 +43,40 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
 
   override def copy(extra: ParamMap): Estimator[WordCountToVecModel] = ???
 
-  override def transformSchema(schema: StructType): StructType = ???
+  override def transformSchema(schema: StructType): StructType = {
+    val requiredColumns = Map(
+      "input_file" -> StringType,
+      "word" -> StringType,
+      "count" -> IntegerType
+    )
+    val inputColumns = schema.fieldNames.toSet
+    require(
+      requiredColumns.keySet.forall(inputColumns),
+      s"Dataset is missing required column(s): ${requiredColumns.keySet.diff(inputColumns).mkString(", ")}"
+    )
+
+    val failedCols = requiredColumns.map {
+      case (col, reqColType) => col -> (reqColType, schema.fields(schema.fieldIndex(col)).dataType)
+    }.filterNot {
+      case (_, (reqColType, realColType)) => reqColType == realColType
+    }
+    require(
+      failedCols.isEmpty,
+      s"Dataset has incorrect column type(s):\n${failedCols.map {
+        case (col, (reqColType, realColType)) =>
+          s"$col expected: $reqColType got: $realColType"
+      }.mkString(", ")}"
+    )
+
+    val outSchema = new StructType()
+      .add("input_file", StringType)
+      .add("raw_word_vector", VectorType)
+
+    if (schema.fieldNames.contains("label"))
+      outSchema.add("label", IntegerType)
+    else
+      outSchema
+  }
 }
 
 
@@ -67,14 +92,7 @@ class WordCountToVecModel protected (
   override def copy(extra: ParamMap): WordCountToVecModel = ???
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    import org.apache.spark.sql.functions.{col, max}
-
-    val requiredColumns = Set("input_file", "word", "count")
-    val inputColumns = dataset.columns.toSet
-    require(
-      requiredColumns.forall(inputColumns),
-      s"Dataset is missing required column(s): ${requiredColumns.diff(inputColumns).mkString(", ")}"
-    )
+    import org.apache.spark.sql.functions.col
 
     val groupByColumns = {
       if (dataset.columns.contains("label"))
@@ -89,7 +107,40 @@ class WordCountToVecModel protected (
       .agg(fileRowVectorizer(col("index"), col("count")) as "raw_word_vector")
   }
 
-  override def transformSchema(schema: StructType): StructType = ???
+  override def transformSchema(schema: StructType): StructType = {
+    val requiredColumns = Map(
+      "input_file" -> StringType,
+      "word" -> StringType,
+      "count" -> IntegerType
+    )
+    val inputColumns = schema.fieldNames.toSet
+    require(
+      requiredColumns.keySet.forall(inputColumns),
+      s"Dataset is missing required column(s): ${requiredColumns.keySet.diff(inputColumns).mkString(", ")}"
+    )
+
+    val failedCols = requiredColumns.map {
+      case (col, reqColType) => col -> (reqColType, schema.fields(schema.fieldIndex(col)).dataType)
+    }.filterNot {
+      case (_, (reqColType, realColType)) => reqColType == realColType
+    }
+    require(
+      failedCols.isEmpty,
+      s"Dataset has incorrect column type(s):\n${failedCols.map {
+        case (col, (reqColType, realColType)) =>
+          s"$col expected: $reqColType got: $realColType"
+      }.mkString(", ")}"
+    )
+
+    val outSchema = new StructType()
+      .add("input_file", StringType)
+      .add("raw_word_vector", VectorType)
+
+    if (schema.fieldNames.contains("label"))
+      outSchema.add("label", IntegerType)
+    else
+      outSchema
+  }
 }
 
 
