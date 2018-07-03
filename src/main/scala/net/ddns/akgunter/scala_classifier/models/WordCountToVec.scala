@@ -38,7 +38,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
       .head()
       .getLong(0)
 
-    new WordCountToVecModel(ordering, maxIndex)
+    new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
   }
 
@@ -50,7 +50,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
 
 class WordCountToVecModel protected (
   protected val ordering: Dataset[_],
-  protected val maxIndex: Long,
+  protected val dictionarySize: Long,
   override val uid: String) extends Model[WordCountToVecModel] {
 
   def this(ordering: Dataset[_], maxIndex: Long) = this(ordering, maxIndex, Identifiable.randomUID("wctvm"))
@@ -67,7 +67,7 @@ class WordCountToVecModel protected (
       s"Dataset is missing required column(s): ${requiredColumns.diff(inputColumns).mkString(", ")}"
     )
 
-    val fileRowVectorizer = new VectorizeFileRow(maxIndex.toInt)
+    val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
     dataset.join(ordering, "word")
       .select("input_file", "index", "count")
       .groupBy("input_file")
