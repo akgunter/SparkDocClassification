@@ -90,11 +90,7 @@ class VectorizeFileRow(maxIndex: Int) extends UserDefinedAggregateFunction {
       .add("map", MapType(IntegerType, IntegerType))
   }
 
-  override def dataType: DataType = {
-    new StructType()
-      .add("input_file", StringType)
-      .add("raw_word_vector", VectorType)
-  }
+  override def dataType: DataType = VectorType
 
   override def deterministic: Boolean = true
 
