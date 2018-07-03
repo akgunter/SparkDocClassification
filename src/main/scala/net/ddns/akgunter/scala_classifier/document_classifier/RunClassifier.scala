@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import org.apache.spark.ml.feature.{IDF, PCA}
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.PCA
+import org.apache.spark.ml.feature.{ChiSqSelector, PCA}
 import org.apache.spark.ml.Pipeline
 
 import scala.util.Random
@@ -108,6 +108,11 @@ object RunClassifier extends CanSpark {
       .setInputCol("tfidf_vector")
       .setK(100)
       .setOutputCol("pca_vector")
+    val chiSel = new ChiSqSelector()
+      .setFeaturesCol("tfidf_vector")
+      .setLabelCol("labels")
+      .setOutputCol("chi_sel_features")
+      .setNumTopFeatures(8000)
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(pca.getK, numClasses))
       .setMaxIter(100)
@@ -115,7 +120,7 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("pca_vector")
 
     val pipeline = new Pipeline()
-        .setStages(Array(wordVectorizer, idf, pca, mlpc))
+        .setStages(Array(wordVectorizer, idf, chiSel, mlpc))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
