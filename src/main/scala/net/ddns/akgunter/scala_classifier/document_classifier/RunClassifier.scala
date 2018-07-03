@@ -110,7 +110,7 @@ object RunClassifier extends CanSpark {
       .setOutputCol("pca_vector")
     val chiSel = new ChiSqSelector()
       .setFeaturesCol("tfidf_vector")
-      .setLabelCol("labels")
+      .setLabelCol("label")
       .setOutputCol("chi_sel_features")
       .setNumTopFeatures(8000)
     val mlpc = new MultilayerPerceptronClassifier()
