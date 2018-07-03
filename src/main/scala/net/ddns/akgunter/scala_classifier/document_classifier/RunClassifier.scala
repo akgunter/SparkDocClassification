@@ -106,9 +106,9 @@ object RunClassifier extends CanSpark {
     val wordVectorizerModel = wordVectorizer.fit(vocabData)
 
     logger.info("Vectorizing data")
-    val trainingDataVectorized = wordVectorizerModel.transform(trainingData).persist
-    val validationDataVectorized = wordVectorizerModel.transform(validationData).persist
-    val testingDataVectorized = wordVectorizerModel.transform(testingData).persist
+    val trainingDataVectorized = wordVectorizerModel.transform(trainingData)
+    val validationDataVectorized = wordVectorizerModel.transform(validationData)
+    val testingDataVectorized = wordVectorizerModel.transform(testingData)
     val vocabDataVectorized = trainingDataVectorized union validationDataVectorized
 
     logger.info(
