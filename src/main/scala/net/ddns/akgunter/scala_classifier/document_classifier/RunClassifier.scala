@@ -6,6 +6,7 @@ import org.apache.spark.ml.feature.{IDF, PCA}
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.PCA
+import org.apache.spark.ml.Pipeline
 
 import scala.util.Random
 import org.apache.spark.sql.SparkSession
@@ -96,67 +97,35 @@ object RunClassifier extends CanSpark {
     val validationDir = Paths.get(dataDir, "Validation").toString
     val testingDir = Paths.get(dataDir, "Testing").toString
 
-    logger.info("Loading data...")
-    val trainingData = dataFrameFromDirectory(trainingDir, training = true)
-    val validationData = dataFrameFromDirectory(validationDir, training = true)
-    val testingData = dataFrameFromDirectory(testingDir, training = false)
-    val vocabData = trainingData union validationData
+    val numClasses = getLabelDirectories(trainingDir).length
 
-    logger.info("Creating vectorizer")
     val wordVectorizer = new WordCountToVec()
-    val wordVectorizerModel = wordVectorizer.fit(vocabData)
-
-    logger.info("Vectorizing data")
-    val trainingDataVectorized = wordVectorizerModel.transform(trainingData)
-    val validationDataVectorized = wordVectorizerModel.transform(validationData)
-    val testingDataVectorized = wordVectorizerModel.transform(testingData)
-    val vocabDataVectorized = trainingDataVectorized union validationDataVectorized
-
-    logger.info(
-      s"""Vectorized files:
-         |\t${trainingDataVectorized.count} training files
-         |\t${validationDataVectorized.count} validation files
-         |\t${testingDataVectorized.count} testing files
-       """.stripMargin
-    )
-
-    val numClasses = trainingDataVectorized.select("label").distinct.count.toInt
-
-    logger.info("Training IDF transform...")
     val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_vector")
-    val idfModel = idf.fit(vocabDataVectorized)
-
-    logger.info("Calculating TF-IDF...")
-    val trainingDataTFIDF = idfModel.transform(trainingDataVectorized)
-    val validationDataTFIDF = idfModel.transform(validationDataVectorized)
-    val testingDataTFIDF = idfModel.transform(testingDataVectorized)
-
-    logger.info("Training PCA transform...")
-    val num_pca_components = 100
     val pca = new PCA()
       .setInputCol("tfidf_vector")
-      .setK(num_pca_components)
+      .setK(100)
       .setOutputCol("pca_vector")
-    val pcaModel = pca.fit(trainingDataTFIDF)
-
-    logger.info("Calculating PCA...")
-    val trainingDataPCA = pcaModel.transform(trainingDataTFIDF)
-    val validationDataPCA = pcaModel.transform(validationDataTFIDF)
-    val testingDataPCA = pcaModel.transform(testingDataTFIDF)
-
-    logger.info("Constructing MLP classifier...")
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(pca.getK, numClasses))
       .setMaxIter(100)
       .setBlockSize(20)
       .setFeaturesCol("pca_vector")
 
-    logger.info("Training MLP classifier...")
-    val mlpcModel = mlpc.fit(trainingDataPCA)
+    val pipeline = new Pipeline()
+        .setStages(Array(wordVectorizer, idf, pca, mlpc))
 
-    logger.info("Evaluating MLP classifier...")
-    val trainingPredictions = mlpcModel.transform(trainingDataPCA)
-    val validationPredictions = mlpcModel.transform(validationDataPCA)
+    logger.info("Loading data...")
+    val trainingData = dataFrameFromDirectory(trainingDir, training = true)
+    val validationData = dataFrameFromDirectory(validationDir, training = true)
+    //val testingData = dataFrameFromDirectory(testingDir, training = false)
+
+    logger.info("Fitting pipeline...")
+    val model = pipeline.fit(trainingData)
+
+    logger.info("Calculating predictions...")
+    val trainingPredictions = model.transform(trainingData)
+    val validationPredictions = model.transform(validationData)
+
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
