@@ -38,6 +38,8 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
       .head()
       .getLong(0)
 
+    println(s"Max key $maxIndex")
+
     new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
   }
@@ -58,7 +60,7 @@ class WordCountToVecModel protected (
   override def copy(extra: ParamMap): WordCountToVecModel = ???
 
   override def transform(dataset: Dataset[_]): DataFrame = {
-    import org.apache.spark.sql.functions.col
+    import org.apache.spark.sql.functions.{col, max}
 
     val requiredColumns = Set("input_file", "word", "count")
     val inputColumns = dataset.columns.toSet
@@ -70,8 +72,11 @@ class WordCountToVecModel protected (
     val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
     dataset.join(ordering, "word")
       .select("input_file", "index", "count")
-      .groupBy("input_file")
-      .agg(fileRowVectorizer(col("index"), col("count")))
+      //.groupBy("input_file")
+      //.agg(fileRowVectorizer(col("index"), col("count")))
+      .select(max("index")).show(truncate = false)
+
+    dataset.as[Row]
   }
 
   override def transformSchema(schema: StructType): StructType = ???
@@ -132,8 +137,6 @@ class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction
       .map {
         case (_, count) => count.toDouble
       }
-
-    println(s"TEST: $dictionarySize, ${idxList.max}")
 
     new SparseVector(dictionarySize, idxList, countList)
   }
