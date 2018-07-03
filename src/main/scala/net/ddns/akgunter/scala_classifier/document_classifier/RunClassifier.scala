@@ -3,6 +3,8 @@ package net.ddns.akgunter.scala_classifier.document_classifier
 import java.nio.file.Paths
 
 import org.apache.spark.ml.feature.IDF
+import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 
 import scala.util.Random
 import org.apache.spark.sql.SparkSession
@@ -117,18 +119,31 @@ object RunClassifier extends CanSpark {
        """.stripMargin
     )
 
-    //trainingDataVectorized.show(1, truncate = false)
+    val numClasses = trainingDataVectorized.select("label").distinct.count.toInt
 
     logger.info("Training IDF transform...")
     val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_word_vector")
     val idfModel = idf.fit(vocabDataVectorized)
 
     logger.info("Calculating TF-IDF...")
-    val trainingTFIDF = idfModel.transform(trainingDataVectorized)
+    val trainingDataTFIDF = idfModel.transform(trainingDataVectorized)
     val validationDataTFIDF = idfModel.transform(validationDataVectorized)
     val testingDataTFIDF = idfModel.transform(testingDataVectorized)
 
-    trainingTFIDF.show(1, truncate = false)
+    val mlpc = new MultilayerPerceptronClassifier()
+      .setLayers(Array(wordVectorizerModel.getDictionarySize.toInt, numClasses))
+      .setMaxIter(100)
+      .setFeaturesCol("tfidf_word_vector")
+    val mlpcModel = mlpc.fit(trainingDataTFIDF)
+
+    val trainingPredictions = mlpcModel.transform(trainingDataTFIDF)
+    val validationPredictions = mlpcModel.transform(validationDataTFIDF)
+
+    val evaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("accuracy")
+
+    logger.info(s"Training accuracy: ${evaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
 

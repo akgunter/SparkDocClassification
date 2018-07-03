@@ -62,6 +62,8 @@ class WordCountToVecModel protected (
 
   def this(ordering: Dataset[_], maxIndex: Long) = this(ordering, maxIndex, Identifiable.randomUID("wctvm"))
 
+  def getDictionarySize: Long = this.dictionarySize
+
   override def copy(extra: ParamMap): WordCountToVecModel = ???
 
   override def transform(dataset: Dataset[_]): DataFrame = {
