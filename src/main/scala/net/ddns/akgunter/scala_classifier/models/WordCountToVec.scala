@@ -78,7 +78,6 @@ class WordCountToVecModel protected (
 
     val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
     dataset.join(ordering, "word")
-      .select("input_file", "index", "count")
       .groupBy("input_file")
       .agg(fileRowVectorizer(col("index"), col("count")) as "raw_word_vector")
   }

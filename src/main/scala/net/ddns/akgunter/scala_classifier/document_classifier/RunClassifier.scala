@@ -156,7 +156,7 @@ object RunClassifier extends CanSpark {
   def main(args: Array[String]): Unit = {
     val dataDir = args(0)
     val testArg = args(1)
-    println(s"Running test $testArg in dataDir=$dataDir")
+    println(s"Running test $testArg with dataDir=$dataDir")
 
     if (testArg == "1") dataProcessing(dataDir)
     else if (testArg == "2") dataProcessingOld(dataDir)
