@@ -43,7 +43,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
     val ordering = getVocabOrdering(dataset)
     val maxIndex = ordering.agg(max("index"))
       .head()
-      .getInt(0)
+      .getLong(0)
 
     ordering.select("word", "index").where(s"index == $maxIndex").show(truncate = false)
 
