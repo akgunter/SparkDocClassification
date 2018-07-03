@@ -95,7 +95,7 @@ object RunClassifier extends CanSpark {
   def dl4jTest(dataDir: String)(implicit spark: SparkSession): Unit = {
     val trainingDir = Paths.get(dataDir, "Training").toString
     val validationDir = Paths.get(dataDir, "Validation").toString
-    val testingDir = Paths.get(dataDir, "Testing").toString
+    //val testingDir = Paths.get(dataDir, "Testing").toString
 
     val numClasses = getLabelDirectories(trainingDir).length
 
@@ -104,23 +104,23 @@ object RunClassifier extends CanSpark {
       .setInputCol("raw_word_vector")
       .setOutputCol("tfidf_vector")
       .setMinDocFreq(2)
-    val pca = new PCA()
-      .setInputCol("tfidf_vector")
-      .setK(100)
-      .setOutputCol("pca_vector")
     val chiSel = new ChiSqSelector()
       .setFeaturesCol("tfidf_vector")
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
-      .setNumTopFeatures(8000)
+      .setFpr(0.15)
+    val pca = new PCA()
+      .setInputCol("chi_sel_features")
+      .setK(100)
+      .setOutputCol("pca_features")
     val mlpc = new MultilayerPerceptronClassifier()
-      .setLayers(Array(chiSel.getNumTopFeatures, numClasses))
+      .setLayers(Array(pca.getK, numClasses))
       .setMaxIter(100)
-      .setBlockSize(20)
-      .setFeaturesCol("chi_sel_features")
+      //.setBlockSize(20)
+      .setFeaturesCol("pca_features")
 
     val pipeline = new Pipeline()
-        .setStages(Array(wordVectorizer, idf, chiSel, mlpc))
+        .setStages(Array(wordVectorizer, idf, chiSel, pca, mlpc))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
