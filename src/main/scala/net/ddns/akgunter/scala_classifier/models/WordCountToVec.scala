@@ -38,7 +38,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
       .head()
       .getLong(0)
 
-    ordering.select("word", "index").where("index == max(index)").show(truncate = false)
+    ordering.select("word", "index").where(s"index == $maxIndex").show(truncate = false)
 
     new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
