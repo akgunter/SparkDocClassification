@@ -117,7 +117,7 @@ object RunClassifier extends CanSpark {
        """.stripMargin
     )
 
-    trainingDataVectorized.show(1)
+    trainingDataVectorized.show(1, truncate = false)
 
     /*
     logger.info("Training IDF transform...")
