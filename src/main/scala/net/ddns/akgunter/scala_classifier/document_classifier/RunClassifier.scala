@@ -2,9 +2,10 @@ package net.ddns.akgunter.scala_classifier.document_classifier
 
 import java.nio.file.Paths
 
-import org.apache.spark.ml.feature.IDF
+import org.apache.spark.ml.feature.{IDF, PCA}
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
+import org.apache.spark.ml.feature.PCA
 
 import scala.util.Random
 import org.apache.spark.sql.SparkSession
@@ -122,7 +123,7 @@ object RunClassifier extends CanSpark {
     val numClasses = trainingDataVectorized.select("label").distinct.count.toInt
 
     logger.info("Training IDF transform...")
-    val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_word_vector")
+    val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_vector")
     val idfModel = idf.fit(vocabDataVectorized)
 
     logger.info("Calculating TF-IDF...")
@@ -130,12 +131,25 @@ object RunClassifier extends CanSpark {
     val validationDataTFIDF = idfModel.transform(validationDataVectorized)
     val testingDataTFIDF = idfModel.transform(testingDataVectorized)
 
+    logger.info("Training PCA transform...")
+    val num_pca_components = 100
+    val pca = new PCA()
+      .setInputCol("tfidf_vector")
+      .setK(num_pca_components)
+      .setOutputCol("pca_vector")
+    val pcaModel = pca.fit(trainingDataTFIDF)
+
+    logger.info("Calculating PCA...")
+    val trainingDataPCA = pcaModel.transform(trainingDataTFIDF)
+    val validationDataPCA = pcaModel.transform(validationDataTFIDF)
+    val testingDataPCA = pcaModel.transform(testingDataTFIDF)
+
     logger.info("Constructing MLP classifier...")
     val mlpc = new MultilayerPerceptronClassifier()
-      .setLayers(Array(wordVectorizerModel.getDictionarySize.toInt, numClasses))
+      .setLayers(Array(pca.getK, numClasses))
       .setMaxIter(100)
       .setBlockSize(20)
-      .setFeaturesCol("tfidf_word_vector")
+      .setFeaturesCol("pca_vector")
 
     logger.info("Training MLP classifier...")
     val mlpcModel = mlpc.fit(trainingDataTFIDF)
