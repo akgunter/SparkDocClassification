@@ -7,7 +7,7 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
 
 //import scala.collection.mutable.{Map => MMap}
 
@@ -76,9 +76,16 @@ class WordCountToVecModel protected (
       s"Dataset is missing required column(s): ${requiredColumns.diff(inputColumns).mkString(", ")}"
     )
 
+    val groupByColumns = {
+      if (dataset.columns.contains("label"))
+        List("input_file", "label")
+      else
+        List("input_file")
+    }.map(new Column(_))
+
     val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
     dataset.join(ordering, "word")
-      .groupBy("input_file")
+      .groupBy(groupByColumns: _*)
       .agg(fileRowVectorizer(col("index"), col("count")) as "raw_word_vector")
   }
 
