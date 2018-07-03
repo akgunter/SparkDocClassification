@@ -152,11 +152,11 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("pca_vector")
 
     logger.info("Training MLP classifier...")
-    val mlpcModel = mlpc.fit(trainingDataTFIDF)
+    val mlpcModel = mlpc.fit(trainingDataPCA)
 
     logger.info("Evaluating MLP classifier...")
-    val trainingPredictions = mlpcModel.transform(trainingDataTFIDF)
-    val validationPredictions = mlpcModel.transform(validationDataTFIDF)
+    val trainingPredictions = mlpcModel.transform(trainingDataPCA)
+    val validationPredictions = mlpcModel.transform(validationDataPCA)
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
