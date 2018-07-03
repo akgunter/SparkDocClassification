@@ -100,7 +100,10 @@ object RunClassifier extends CanSpark {
     val numClasses = getLabelDirectories(trainingDir).length
 
     val wordVectorizer = new WordCountToVec()
-    val idf = new IDF().setInputCol("raw_word_vector").setOutputCol("tfidf_vector")
+    val idf = new IDF()
+      .setInputCol("raw_word_vector")
+      .setOutputCol("tfidf_vector")
+      .setMinDocFreq(2)
     val pca = new PCA()
       .setInputCol("tfidf_vector")
       .setK(100)

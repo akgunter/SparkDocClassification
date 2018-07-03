@@ -2,7 +2,7 @@ package net.ddns.akgunter.scala_classifier.models
 
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.param.{Param, Params, ParamMap}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
@@ -10,12 +10,45 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row}
 
 
-class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecModel] {
+trait WordCountToVecParams extends Params {
+  final val fileCol = new Param[String](this, "fileCol", "The input file column")
+  final val wordCol = new Param[String](this, "wordCol", "The input word column")
+  final val countCol = new Param[String](this, "countCol", "The input word-count column")
+  final val labelCol = new Param[String](this, "labelCol", "The optional input label column")
+  final val indexCol = new Param[String](this, "indexCol", "The index output column")
+  final val vectorCol = new Param[String](this, "vectorCol", "The vector output column")
 
-  def this() = this(Identifiable.randomUID("wctv"))
+  setDefault(fileCol, "input_file")
+  setDefault(wordCol, "word")
+  setDefault(countCol, "count")
+  setDefault(labelCol, "label")
+  setDefault(indexCol, "index")
+  setDefault(vectorCol, "raw_word_vector")
+}
+
+
+class WordCountToVec(override val uid: String)
+  extends Estimator[WordCountToVecModel]
+  with WordCountToVecParams {
+
+  def this() = this(Identifiable.randomUID("WordCountToVec"))
+
+  def setFileCol(value: String): WordCountToVec = set(fileCol, value)
+
+  def setWordCol(value: String): WordCountToVec = set(wordCol, value)
+
+  def setCountCol(value: String): WordCountToVec = set(countCol, value)
+
+  def setLabelCol(value: String): WordCountToVec = set(labelCol, value)
+
+  def setIndexCol(value: String): WordCountToVec = set(indexCol, value)
+
+  def setVectorCol(value: String): WordCountToVec = set(vectorCol, value)
+
+  override def copy(extra: ParamMap): Estimator[WordCountToVecModel] = defaultCopy(extra)
 
   protected def getVocabOrdering(dataset: Dataset[_]): DataFrame = {
-    val wordSet = dataset.select("word")
+    val wordSet = dataset.select($(wordCol))
 
     dataset.sparkSession.createDataFrame(
       wordSet
@@ -25,7 +58,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
         .map { case (row, idx) =>
           Row.fromSeq(row.toSeq :+ idx)
         },
-      wordSet.schema.add("index", LongType)
+      wordSet.schema.add($(indexCol), LongType)
     )
   }
 
@@ -33,21 +66,25 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
     import org.apache.spark.sql.functions.max
 
     val ordering = getVocabOrdering(dataset)
-    val maxIndex = ordering.agg(max("index"))
+    val maxIndex = ordering.agg(max($(indexCol)))
       .head()
       .getLong(0)
 
     new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
+      .setCountCol($(countCol))
+      .setFileCol($(fileCol))
+      .setIndexCol($(indexCol))
+      .setLabelCol($(labelCol))
+      .setVectorCol($(vectorCol))
+      .setWordCol($(wordCol))
   }
-
-  override def copy(extra: ParamMap): Estimator[WordCountToVecModel] = ???
 
   override def transformSchema(schema: StructType): StructType = {
     val requiredColumns = Map(
-      "input_file" -> StringType,
-      "word" -> StringType,
-      "count" -> IntegerType
+      $(fileCol) -> StringType,
+      $(wordCol) -> StringType,
+      $(countCol) -> IntegerType
     )
     val inputColumns = schema.fieldNames.toSet
     require(
@@ -69,11 +106,11 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
     )
 
     val outSchema = new StructType()
-      .add("input_file", StringType)
-      .add("raw_word_vector", VectorType)
+      .add($(fileCol), StringType)
+      .add($(vectorCol), VectorType)
 
-    if (schema.fieldNames.contains("label"))
-      outSchema.add("label", IntegerType)
+    if (schema.fieldNames.contains($(labelCol)))
+      outSchema.add($(labelCol), IntegerType)
     else
       outSchema
   }
@@ -81,37 +118,57 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
 
 
 class WordCountToVecModel protected (
-  protected val ordering: Dataset[_],
-  protected val dictionarySize: Long,
-  override val uid: String) extends Model[WordCountToVecModel] {
+    protected val ordering: Dataset[_],
+    protected val dictionarySize: Long,
+    override val uid: String)
+  extends Model[WordCountToVecModel]
+  with WordCountToVecParams {
 
-  def this(ordering: Dataset[_], maxIndex: Long) = this(ordering, maxIndex, Identifiable.randomUID("wctvm"))
+  protected def this(ordering: Dataset[_], maxIndex: Long) = {
+    this(ordering, maxIndex, Identifiable.randomUID("WordCountToVecModel"))
+  }
+
+  def setFileCol(value: String): WordCountToVecModel = set(fileCol, value)
+
+  def setWordCol(value: String): WordCountToVecModel = set(wordCol, value)
+
+  def setCountCol(value: String): WordCountToVecModel = set(countCol, value)
+
+  def setLabelCol(value: String): WordCountToVecModel = set(labelCol, value)
+
+  def setIndexCol(value: String): WordCountToVecModel = set(indexCol, value)
+
+  def setVectorCol(value: String): WordCountToVecModel = set(vectorCol, value)
+
+  override def copy(extra: ParamMap): WordCountToVecModel = defaultCopy(extra)
 
   def getDictionarySize: Long = this.dictionarySize
 
-  override def copy(extra: ParamMap): WordCountToVecModel = ???
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     import org.apache.spark.sql.functions.col
 
     val groupByColumns = {
-      if (dataset.columns.contains("label"))
-        List("input_file", "label", "label_str")
+      if (dataset.columns.contains($(labelCol)))
+        List($(fileCol), $(labelCol))
       else
-        List("input_file")
-    }.map(new Column(_))
+        List($(fileCol))
+    }.map(colParam => new Column(colParam))
 
     val fileRowVectorizer = new VectorizeFileRow(dictionarySize.toInt)
-    dataset.join(ordering, "word")
+        .setCountCol($(countCol))
+        .setIndexCol($(indexCol))
+
+    dataset.join(ordering, $(wordCol))
       .groupBy(groupByColumns: _*)
-      .agg(fileRowVectorizer(col("index"), col("count")) as "raw_word_vector")
+      .agg(fileRowVectorizer(col($(indexCol)), col($(countCol))) as $(vectorCol))
   }
 
   override def transformSchema(schema: StructType): StructType = {
     val requiredColumns = Map(
-      "input_file" -> StringType,
-      "word" -> StringType,
-      "count" -> IntegerType
+      $(fileCol) -> StringType,
+      $(wordCol) -> StringType,
+      $(countCol) -> IntegerType
     )
     val inputColumns = schema.fieldNames.toSet
     require(
@@ -133,27 +190,49 @@ class WordCountToVecModel protected (
     )
 
     val outSchema = new StructType()
-      .add("input_file", StringType)
-      .add("raw_word_vector", VectorType)
+      .add($(fileCol), StringType)
+      .add($(vectorCol), VectorType)
 
-    if (schema.fieldNames.contains("label"))
-      outSchema.add("label", IntegerType)
+    if (schema.fieldNames.contains($(labelCol)))
+      outSchema.add($(labelCol), IntegerType)
     else
       outSchema
   }
 }
 
 
-class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction {
+trait VectorizeFileRowParams extends WordCountToVecParams {
+  final val mapCol = new Param[String](this, "map", "The buffer's map column")
+
+  setDefault(mapCol, "vfr_buffer_map")
+}
+
+
+class VectorizeFileRow protected (
+    protected val dictionarySize: Int,
+    override val uid: String)
+  extends UserDefinedAggregateFunction
+  with VectorizeFileRowParams {
+
+  protected def this(dictionarySize: Int) = {
+    this(dictionarySize, Identifiable.randomUID("VectorizeFileRow"))
+  }
+
+  def setCountCol(value: String): VectorizeFileRow = set(countCol, value)
+
+  def setIndexCol(value: String): VectorizeFileRow = set(indexCol, value)
+
+  override def copy(extra: ParamMap): Params = defaultCopy(extra)
+
   override def inputSchema: StructType = {
     new StructType()
-      .add("index", IntegerType)
-      .add("count", IntegerType)
+      .add($(indexCol), IntegerType)
+      .add($(countCol), IntegerType)
   }
 
   override def bufferSchema: StructType = {
     new StructType()
-      .add("map", MapType(IntegerType, IntegerType))
+      .add($(mapCol), MapType(IntegerType, IntegerType))
   }
 
   override def dataType: DataType = VectorType
