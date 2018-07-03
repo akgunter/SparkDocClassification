@@ -20,7 +20,7 @@ class WordCountToVec(override val uid: String) extends Estimator[WordCountToVecM
       .distinct
       .rdd
       .zipWithIndex
-      .map(row => Row(row(0), row(1)))
+      .map(row => Row(row._1, row._2))
 
     val schema = new StructType()
         .add("word", StringType)
