@@ -136,6 +136,7 @@ object RunClassifier extends CanSpark {
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(wordVectorizerModel.getDictionarySize.toInt, numClasses))
       .setMaxIter(100)
+      .setBlockSize(128)
       .setFeaturesCol("tfidf_word_vector")
 
     logger.info("Training MLP classifier...")
