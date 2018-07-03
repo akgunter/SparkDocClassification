@@ -97,7 +97,8 @@ class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction
       .add("map", MapType(IntegerType, IntegerType))
   }
 
-  override def dataType: DataType = VectorType
+  override def dataType: DataType = new StructType()
+    .add("raw_word_vector", VectorType)
 
   override def deterministic: Boolean = true
 
@@ -140,6 +141,7 @@ class VectorizeFileRow(dictionarySize: Int) extends UserDefinedAggregateFunction
         case (_, count) => count.toDouble
       }
 
-    new SparseVector(dictionarySize, idxList, countList)
+    val vector = new SparseVector(dictionarySize, idxList, countList)
+    Row.fromSeq(Seq(vector))
   }
 }
