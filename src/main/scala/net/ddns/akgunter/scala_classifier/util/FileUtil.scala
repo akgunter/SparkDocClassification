@@ -10,10 +10,6 @@ import org.apache.spark.sql.types._
 object FileUtil {
   val labelPattern: String = "class[A-Z]*"
 
-  final val fileSchema: StructType = new StructType()
-    .add("word", StringType)
-    .add("count", IntegerType)
-
   def getDataFiles(baseDir: String): Seq[String] = {
     new File(baseDir)
       .listFiles
@@ -53,26 +49,13 @@ object FileUtil {
     }
   }
 
-  def loadChenCSV(filePath: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import org.apache.spark.sql.functions.{input_file_name, lit}
-
-    println(s"Loading file $filePath")
-
-    val df = spark.read
-      .schema(fileSchema)
-      .option("mode", "DROPMALFORMED")
-      .option("delimiter", " ")
-      .csv(filePath)
-      .withColumn("input_file", input_file_name)
-
-    if (training)
-      df.withColumn("label", lit(getLabelFromFilePath(filePath)))
-    else
-      df
-  }
-
   def dataFrameFromDirectory(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import org.apache.spark.sql.functions.{col, input_file_name, udf}
+    import spark.implicits._
+    import org.apache.spark.sql.functions._
+
+    val fileSchema: StructType = new StructType()
+      .add("word", StringType)
+      .add("count", IntegerType)
 
     val dirPattern = {
       if (training)
@@ -86,6 +69,10 @@ object FileUtil {
       .option("mode", "DROPMALFORMED")
       .option("delimiter", " ")
       .csv(dirPattern)
+      .select(
+        trim(lower('word)) as "word",
+        'count
+      )
       .withColumn("input_file", input_file_name)
 
     if (training) {
