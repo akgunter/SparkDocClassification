@@ -108,6 +108,7 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("tfidf_vector")
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
+      .setSelectorType("fpr")
       .setFpr(0.15)
     val pca = new PCA()
       .setInputCol("chi_sel_features")
