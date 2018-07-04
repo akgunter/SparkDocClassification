@@ -53,30 +53,27 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = dataModel.transform(trainingData)
     val validationDataProcessed = dataModel.transform(validationData)
 
-    logger.info("Configuring neural network...")
-    trainingDataProcessed.printSchema()
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector]("chi_sel_features").size
 
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(numFeatures, numClasses))
       .setMaxIter(100)
       //.setBlockSize(20)
       .setFeaturesCol("pca_features")
 
-    /*
     logger.info("Training neural network...")
+    val mlpcModel = mlpc.fit(trainingDataProcessed)
 
     logger.info("Calculating predictions...")
-    val trainingPredictions = model.transform(trainingData)
-    val validationPredictions = model.transform(validationData)
-
-
+    val trainingPredictions = mlpcModel.transform(trainingData)
+    val validationPredictions = mlpcModel.transform(validationData)
+    
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
 
     logger.info(s"Training accuracy: ${evaluator.evaluate(trainingPredictions)}")
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
-    */
   }
 
   def main(args: Array[String]): Unit = {
