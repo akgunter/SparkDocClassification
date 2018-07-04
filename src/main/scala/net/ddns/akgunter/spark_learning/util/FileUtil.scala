@@ -2,9 +2,8 @@ package net.ddns.akgunter.spark_learning.util
 
 import java.io.File
 import java.nio.file.Paths
-import scala.util.matching.Regex
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
 
 object FileUtil {
@@ -29,12 +28,12 @@ object FileUtil {
   }
 
   def traverseLabeledDataFiles(baseDir: String): Seq[String] = {
-    val subdirs = new File(baseDir)
+    val subDirs = new File(baseDir)
       .listFiles
       .filter(_.isDirectory)
       .map(_.toString)
 
-    subdirs.flatMap(getDataFiles)
+    subDirs.flatMap(getDataFiles)
   }
 
   def traverseUnlabeledDataFiles(baseDir: String): Seq[String] = {
