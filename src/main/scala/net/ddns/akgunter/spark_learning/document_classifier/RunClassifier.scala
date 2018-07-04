@@ -9,7 +9,7 @@ import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 
 import org.apache.spark.sql.SparkSession
-import net.ddns.akgunter.spark_learning.models.{WordCountToVec, _}
+import net.ddns.akgunter.spark_learning.data_processing.WordCountToVec
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
