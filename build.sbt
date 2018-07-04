@@ -3,7 +3,7 @@ val sparkVersion = "2.3.1"
 lazy val scalaclassifier =
   (project in file(".")).
     settings(
-      name := "ScalaClassifier",
+      name := "SparkLearning",
       organization := "net.ddns.akgunter",
       version := "0.1",
       scalaVersion := "2.11.12",
