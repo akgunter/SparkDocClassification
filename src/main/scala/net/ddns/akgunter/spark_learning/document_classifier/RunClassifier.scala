@@ -72,8 +72,8 @@ object RunClassifier extends CanSpark {
     val mlpcModel = mlpc.fit(trainingDataProcessed)
 
     logger.info("Calculating predictions...")
-    val trainingPredictions = mlpcModel.transform(trainingData)
-    val validationPredictions = mlpcModel.transform(validationData)
+    val trainingPredictions = mlpcModel.transform(trainingDataProcessed)
+    val validationPredictions = mlpcModel.transform(validationDataProcessed)
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
