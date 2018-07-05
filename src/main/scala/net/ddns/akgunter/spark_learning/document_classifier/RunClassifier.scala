@@ -7,8 +7,9 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, IDF, PCA}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
-
 import org.apache.spark.sql.SparkSession
+
+import net.ddns.akgunter.spark_learning.data_processing.DataFrameOperations._
 import net.ddns.akgunter.spark_learning.data_processing.WordCountToVec
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.util.FileUtil._
@@ -46,12 +47,17 @@ object RunClassifier extends CanSpark {
     val validationData = dataFrameFromDirectory(validationDir, training = true)
     //val testingData = dataFrameFromDirectory(testingDir, training = false)
 
+    logger.info("Dropping common words...")
+    val dropRatio = 0.3
+    val trainingDataFiltered = dropCommonWords(trainingData, dropRatio)
+    val validationDataFiltered = dropCommonWords(validationData, dropRatio)
+
     logger.info("Fitting preprocessing pipeline...")
-    val dataModel = preprocPipeline.fit(trainingData)
+    val dataModel = preprocPipeline.fit(trainingDataFiltered)
 
     logger.info("Preprocessing data...")
-    val trainingDataProcessed = dataModel.transform(trainingData)
-    val validationDataProcessed = dataModel.transform(validationData)
+    val trainingDataProcessed = dataModel.transform(trainingDataFiltered)
+    val validationDataProcessed = dataModel.transform(validationDataFiltered)
 
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector]("chi_sel_features").size
 
@@ -68,7 +74,7 @@ object RunClassifier extends CanSpark {
     logger.info("Calculating predictions...")
     val trainingPredictions = mlpcModel.transform(trainingData)
     val validationPredictions = mlpcModel.transform(validationData)
-    
+
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
 
