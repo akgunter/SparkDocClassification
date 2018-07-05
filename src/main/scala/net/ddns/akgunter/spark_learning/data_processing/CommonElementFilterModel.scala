@@ -11,10 +11,11 @@ class CommonElementFilterModel protected (
   extends Model[CommonElementFilterModel]
     with WordVectorPipelineStage {
 
-  override protected val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredInputColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol
   )
+  override protected val requiredOutputColumns: Set[Param[String]] = Set()
 
   protected[data_processing] def this(wordsToKeep: DataFrame) = {
     this(wordsToKeep, Identifiable.randomUID("CommonElementFilterModel"))

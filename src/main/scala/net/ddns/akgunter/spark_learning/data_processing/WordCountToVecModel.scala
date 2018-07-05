@@ -13,10 +13,13 @@ class WordCountToVecModel protected (
   extends Model[WordCountToVecModel]
     with WordVectorPipelineStage {
 
-  override protected val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredInputColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol,
     wordCountCol
+  )
+  override protected val requiredOutputColumns: Set[Param[String]] = Set (
+    vectorCol
   )
 
   protected[data_processing] def this(ordering: Dataset[_], maxIndex: Long) = {

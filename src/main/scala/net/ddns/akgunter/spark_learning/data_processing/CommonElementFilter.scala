@@ -9,10 +9,11 @@ class CommonElementFilter(override val uid: String)
   extends Estimator[CommonElementFilterModel]
     with WordVectorPipelineStage {
 
-  override protected val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredInputColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol
   )
+  override protected val requiredOutputColumns: Set[Param[String]] = Set()
 
   final val dropFreq = new Param[Double](this, "dropFreq", "The maximum allowed document frequency")
   setDefault(dropFreq, 0.2)
