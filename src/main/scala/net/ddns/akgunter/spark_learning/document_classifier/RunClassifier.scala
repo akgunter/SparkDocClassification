@@ -48,6 +48,8 @@ object RunClassifier extends CanSpark {
     //val testingData = dataFrameFromDirectory(testingDir, training = false)
 
     logger.info("Dropping common words...")
+    // TODO: This doesn't work. The output words are different.
+    // Swap to an Estimator
     val dropRatio = 0.3
     val trainingDataFiltered = dropCommonWords(trainingData, dropRatio)
     val validationDataFiltered = dropCommonWords(validationData, dropRatio)
@@ -66,7 +68,7 @@ object RunClassifier extends CanSpark {
       .setLayers(Array(numFeatures, numClasses))
       .setMaxIter(100)
       //.setBlockSize(20)
-      .setFeaturesCol("pca_features")
+      .setFeaturesCol("chi_sel_features")
 
     logger.info("Training neural network...")
     val mlpcModel = mlpc.fit(trainingDataProcessed)

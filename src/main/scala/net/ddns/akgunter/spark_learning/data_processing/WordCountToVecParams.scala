@@ -12,8 +12,8 @@ trait WordCountToVecParams extends Params {
 
   setDefault(fileCol, "input_file")
   setDefault(wordCol, "word")
-  setDefault(countCol, "count")
+  setDefault(countCol, "word_count")
   setDefault(labelCol, "label")
-  setDefault(indexCol, "index")
+  setDefault(indexCol, "word_index")
   setDefault(vectorCol, "raw_word_vector")
 }

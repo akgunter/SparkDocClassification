@@ -65,7 +65,7 @@ object FileUtil {
 
     val fileSchema: StructType = new StructType()
       .add("word", StringType)
-      .add("count", IntegerType)
+      .add("word_count", IntegerType)
 
     val dirPattern = {
       if (training)
