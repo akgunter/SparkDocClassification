@@ -1,16 +1,15 @@
 package net.ddns.akgunter.spark_learning.data_processing
 
-import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.{Estimator, PipelineStage}
 import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.ml.util.Identifiable
 
 class CommonElementFilter(override val uid: String)
   extends Estimator[CommonElementFilterModel]
     with WordVectorPipelineStage {
 
-  override val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol
   )

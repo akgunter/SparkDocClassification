@@ -11,7 +11,7 @@ class CommonElementFilterModel protected (
   extends Model[CommonElementFilterModel]
     with WordVectorPipelineStage {
 
-  override val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol
   )

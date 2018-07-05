@@ -10,7 +10,7 @@ class WordCountToVec(override val uid: String)
   extends Estimator[WordCountToVecModel]
     with WordVectorPipelineStage {
 
-  override val requiredColumns: Set[Param[String]] = Set(
+  override protected val requiredColumns: Set[Param[String]] = Set(
     fileCol,
     wordCol,
     wordCountCol
