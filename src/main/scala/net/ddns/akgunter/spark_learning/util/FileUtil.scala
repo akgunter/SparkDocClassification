@@ -81,7 +81,7 @@ object FileUtil {
       .csv(dirPattern)
       .select(
         trim(lower('word)) as "word",
-        'count
+        'word_count
       )
       .withColumn("input_file", input_file_name)
 
