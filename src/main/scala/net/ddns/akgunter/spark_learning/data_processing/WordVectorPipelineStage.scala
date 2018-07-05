@@ -17,8 +17,8 @@ trait WordVectorPipelineStage extends PipelineStage with WordVectorParams {
       s"Dataset is missing required column(s): ${requiredColumnStrings.diff(inputColumns).mkString(", ")}"
     )
 
-    val requiredIColumnTypes = requiredColumnStrings.map {
-      colStr => colStr -> WordVectorParams.COLUMN_TYPES(colStr)
+    val requiredIColumnTypes = requiredInputColumns.map {
+      param => $(param) -> WordVectorParams.COLUMN_TYPES(param.name)
     }
     val inputColumnTypes = schema.fieldNames.map {
       colStr => colStr -> schema.fields(schema.fieldIndex(colStr)).dataType
@@ -37,7 +37,7 @@ trait WordVectorPipelineStage extends PipelineStage with WordVectorParams {
     )
 
     val requiredOColumnTypes = requiredOutputColumns.map {
-      param => param.name -> WordVectorParams.COLUMN_TYPES(param.name)
+      param => $(param) -> WordVectorParams.COLUMN_TYPES(param.name)
     }
 
     val outputColumnTypes = inputColumnTypes ++ requiredOColumnTypes
