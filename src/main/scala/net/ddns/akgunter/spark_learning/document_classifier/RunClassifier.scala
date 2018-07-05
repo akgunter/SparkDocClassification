@@ -6,7 +6,7 @@ import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{ChiSqSelector, IDF, PCA}
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.{Estimator, Pipeline}
 import org.apache.spark.sql.SparkSession
 
 import net.ddns.akgunter.spark_learning.data_processing._
@@ -37,11 +37,11 @@ object RunClassifier extends CanSpark {
       .setFpr(0.05)
     val pca = new PCA()
       .setInputCol("chi_sel_features")
-      .setK(100)
+      .setK(8000)
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
-        .setStages(Array(commonElementFilter, wordVectorizer, idf, chiSel))
+        .setStages(Array(commonElementFilter, wordVectorizer, idf, chiSel, pca))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
@@ -55,14 +55,18 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = dataModel.transform(trainingData)
     val validationDataProcessed = dataModel.transform(validationData)
 
-    val numFeatures = trainingDataProcessed.head.getAs[SparseVector]("chi_sel_features").size
+    val lastStage = preprocPipeline.getStages.last
+    val featuresColParam = lastStage.getParam("outputCol")
+    val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
+
+    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(numFeatures, numClasses))
       .setMaxIter(100)
       //.setBlockSize(20)
-      .setFeaturesCol("chi_sel_features")
+      .setFeaturesCol(featuresCol)
 
     logger.info("Training neural network...")
     val mlpcModel = mlpc.fit(trainingDataProcessed)
