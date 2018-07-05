@@ -7,7 +7,8 @@ object DataFrameOperations {
   def dropCommonWords(df: DataFrame, dropRatio: Double): DataFrame = {
     val numDocs = df.select("input_file").distinct.count
 
-    val keptWords = df.groupBy("word")
+    val keptWords = df.select("word", "input_file")
+      .groupBy("word")
       .count
       .filter {
         row => row.getAs[Long]("count") < (1 - dropRatio) * numDocs
