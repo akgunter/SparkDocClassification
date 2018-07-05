@@ -23,7 +23,7 @@ object RunClassifier extends CanSpark {
     val numClasses = getLabelDirectories(trainingDir).length
 
     val commonElementFilter = new CommonElementFilter()
-      .setDropFreq(0.2)
+      .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
     val binarizer = new Binarizer()
       .setThreshold(0.0)
@@ -45,7 +45,7 @@ object RunClassifier extends CanSpark {
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
-        .setStages(Array(commonElementFilter, wordVectorizer, idf, chiSel, pca))
+        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel, pca))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
