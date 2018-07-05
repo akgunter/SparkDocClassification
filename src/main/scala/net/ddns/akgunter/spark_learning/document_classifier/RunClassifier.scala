@@ -37,15 +37,14 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("tfidf_vector")
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
-      .setSelectorType("fpr")
-      .setFpr(0.005)
+      .setNumTopFeatures(8000)
     val pca = new PCA()
       .setInputCol("chi_sel_features")
       .setK(8000)
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
-        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel, pca))
+        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
