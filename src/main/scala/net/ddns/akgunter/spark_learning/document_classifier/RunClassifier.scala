@@ -34,7 +34,7 @@ object RunClassifier extends CanSpark {
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
       .setSelectorType("fpr")
-      .setFpr(0.05)
+      .setFpr(0.02)
     val pca = new PCA()
       .setInputCol("chi_sel_features")
       .setK(8000)
