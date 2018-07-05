@@ -7,7 +7,7 @@ import org.apache.spark.sql.types._
 
 trait WordVectorPipelineStage extends PipelineStage with WordVectorParams {
 
-  abstract val requiredColumns: Set[Param[String]]
+  protected val requiredColumns: Set[Param[String]]
 
   override def transformSchema(schema: StructType): StructType = {
     val requiredColumnStrings = requiredColumns.map(param => $(param))
