@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{ChiSqSelector, IDF, PCA}
+import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, PCA}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.{Estimator, Pipeline}
 import org.apache.spark.sql.SparkSession
@@ -25,8 +25,12 @@ object RunClassifier extends CanSpark {
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.2)
     val wordVectorizer = new WordCountToVec()
-    val idf = new IDF()
+    val binarizer = new Binarizer()
+      .setThreshold(0.0)
       .setInputCol("raw_word_vector")
+      .setOutputCol("binarized_word_vector")
+    val idf = new IDF()
+      .setInputCol("binarized_word_vector")
       .setOutputCol("tfidf_vector")
       .setMinDocFreq(2)
     val chiSel = new ChiSqSelector()
