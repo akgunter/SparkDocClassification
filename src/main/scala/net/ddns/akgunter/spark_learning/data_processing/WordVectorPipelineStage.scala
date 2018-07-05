@@ -35,6 +35,7 @@ trait WordVectorPipelineStage extends PipelineStage with WordVectorParams {
     )
 
     val outSchema = WordVectorPipelineStage.buildSchema(requiredColumnTypes)
+    outSchema.printTreeString()
 
     if (schema.fieldNames.contains($(labelCol)))
       outSchema.add($(labelCol), IntegerType)
