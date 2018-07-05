@@ -1,16 +1,20 @@
 package net.ddns.akgunter.spark_learning.data_processing
 
 import org.apache.spark.ml.Estimator
-import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
-
+import org.apache.spark.sql.types.LongType
 
 class WordCountToVec(override val uid: String)
   extends Estimator[WordCountToVecModel]
-  with WordCountToVecParams {
+    with WordVectorPipelineStage {
+
+  override val requiredColumns: Set[Param[String]] = Set(
+    fileCol,
+    wordCol,
+    wordCountCol
+  )
 
   def this() = this(Identifiable.randomUID("WordCountToVec"))
 
@@ -18,7 +22,7 @@ class WordCountToVec(override val uid: String)
 
   def setWordCol(value: String): WordCountToVec = set(wordCol, value)
 
-  def setCountCol(value: String): WordCountToVec = set(countCol, value)
+  def setCountCol(value: String): WordCountToVec = set(wordCountCol, value)
 
   def setLabelCol(value: String): WordCountToVec = set(labelCol, value)
 
@@ -53,46 +57,11 @@ class WordCountToVec(override val uid: String)
 
     new WordCountToVecModel(ordering, maxIndex + 1)
       .setParent(this)
-      .setCountCol($(countCol))
+      .setCountCol($(wordCountCol))
       .setFileCol($(fileCol))
       .setIndexCol($(indexCol))
       .setLabelCol($(labelCol))
       .setVectorCol($(vectorCol))
       .setWordCol($(wordCol))
-  }
-
-  override def transformSchema(schema: StructType): StructType = {
-    val requiredColumns = Map(
-      $(fileCol) -> StringType,
-      $(wordCol) -> StringType,
-      $(countCol) -> IntegerType
-    )
-    val inputColumns = schema.fieldNames.toSet
-    require(
-      requiredColumns.keySet.forall(inputColumns),
-      s"Dataset is missing required column(s): ${requiredColumns.keySet.diff(inputColumns).mkString(", ")}"
-    )
-
-    val failedCols = requiredColumns.map {
-      case (col, reqColType) => col -> (reqColType, schema.fields(schema.fieldIndex(col)).dataType)
-    }.filterNot {
-      case (_, (reqColType, realColType)) => reqColType == realColType
-    }
-    require(
-      failedCols.isEmpty,
-      s"Dataset has incorrect column type(s):\n${failedCols.map {
-        case (col, (reqColType, realColType)) =>
-          s"$col expected: $reqColType got: $realColType"
-      }.mkString(", ")}"
-    )
-
-    val outSchema = new StructType()
-      .add($(fileCol), StringType)
-      .add($(vectorCol), VectorType)
-
-    if (schema.fieldNames.contains($(labelCol)))
-      outSchema.add($(labelCol), IntegerType)
-    else
-      outSchema
   }
 }

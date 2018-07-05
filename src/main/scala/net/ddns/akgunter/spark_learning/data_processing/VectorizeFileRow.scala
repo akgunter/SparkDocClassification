@@ -2,7 +2,7 @@ package net.ddns.akgunter.spark_learning.data_processing
 
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.ml.param.{ParamMap, Params}
+import org.apache.spark.ml.param.{Param, ParamMap, Params}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
@@ -12,13 +12,16 @@ class VectorizeFileRow protected (
     protected val dictionarySize: Int,
     override val uid: String)
   extends UserDefinedAggregateFunction
-    with VectorizeFileRowParams {
+    with WordVectorParams {
+
+  final val mapCol = new Param[String](this, "map", "The buffer's map column")
+  setDefault(mapCol, "vfr_buffer_map")
 
   protected[data_processing] def this(dictionarySize: Int) = {
     this(dictionarySize, Identifiable.randomUID("VectorizeFileRow"))
   }
 
-  def setCountCol(value: String): VectorizeFileRow = set(countCol, value)
+  def setCountCol(value: String): VectorizeFileRow = set(wordCountCol, value)
 
   def setIndexCol(value: String): VectorizeFileRow = set(indexCol, value)
 
@@ -27,7 +30,7 @@ class VectorizeFileRow protected (
   override def inputSchema: StructType = {
     new StructType()
       .add($(indexCol), IntegerType)
-      .add($(countCol), IntegerType)
+      .add($(wordCountCol), IntegerType)
   }
 
   override def bufferSchema: StructType = {

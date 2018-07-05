@@ -9,8 +9,7 @@ import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.SparkSession
 
-import net.ddns.akgunter.spark_learning.data_processing.DataFrameOperations._
-import net.ddns.akgunter.spark_learning.data_processing.WordCountToVec
+import net.ddns.akgunter.spark_learning.data_processing._
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
@@ -23,6 +22,8 @@ object RunClassifier extends CanSpark {
 
     val numClasses = getLabelDirectories(trainingDir).length
 
+    val commonElementFilter = new CommonElementFilter()
+      .setDropFreq(0.2)
     val wordVectorizer = new WordCountToVec()
     val idf = new IDF()
       .setInputCol("raw_word_vector")
@@ -40,26 +41,19 @@ object RunClassifier extends CanSpark {
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
-        .setStages(Array(wordVectorizer, idf, chiSel))
+        .setStages(Array(commonElementFilter, wordVectorizer, idf, chiSel))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, training = true)
     val validationData = dataFrameFromDirectory(validationDir, training = true)
     //val testingData = dataFrameFromDirectory(testingDir, training = false)
 
-    logger.info("Dropping common words...")
-    // TODO: This doesn't work. The output words are different.
-    // Swap to an Estimator
-    val dropRatio = 0.3
-    val trainingDataFiltered = dropCommonWords(trainingData, dropRatio)
-    val validationDataFiltered = dropCommonWords(validationData, dropRatio)
-
     logger.info("Fitting preprocessing pipeline...")
-    val dataModel = preprocPipeline.fit(trainingDataFiltered)
+    val dataModel = preprocPipeline.fit(trainingData)
 
     logger.info("Preprocessing data...")
-    val trainingDataProcessed = dataModel.transform(trainingDataFiltered)
-    val validationDataProcessed = dataModel.transform(validationDataFiltered)
+    val trainingDataProcessed = dataModel.transform(trainingData)
+    val validationDataProcessed = dataModel.transform(validationData)
 
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector]("chi_sel_features").size
 
