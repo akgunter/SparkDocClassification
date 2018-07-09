@@ -6,19 +6,28 @@ import java.nio.file.Paths
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
 
+import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator
+import org.datavec.api.records.reader.RecordReader
+import org.datavec.api.records.reader.impl.csv.CSVRecordReader
+import org.datavec.api.split.FileSplit
+import org.datavec.api.transform.schema.Schema
+import org.datavec.api.transform.TransformProcess
+import org.datavec.spark.transform.SparkTransformExecutor
+
+
 object FileUtil {
   val labelPrefix: String = "class"
   val labelPattern: String = s"$labelPrefix[A-Z]*"
 
-  def getDataFiles(baseDir: String): Seq[String] = {
-    new File(baseDir)
+  def getDataFiles(baseDirPath: String): Seq[String] = {
+    new File(baseDirPath)
       .listFiles
       .filter { f => f.isFile && f.getName.endsWith(".res") }
       .map(_.toString)
   }
 
-  def getLabelDirectories(baseDir: String): Seq[String] = {
-    new File(baseDir)
+  def getLabelDirectories(baseDirPath: String): Seq[String] = {
+    new File(baseDirPath)
       .listFiles
       .filter {
         name =>
@@ -27,8 +36,8 @@ object FileUtil {
       .map(_.toString)
   }
 
-  def traverseLabeledDataFiles(baseDir: String): Seq[String] = {
-    val subDirs = new File(baseDir)
+  def traverseLabeledDataFiles(baseDirPath: String): Seq[String] = {
+    val subDirs = new File(baseDirPath)
       .listFiles
       .filter(_.isDirectory)
       .map(_.toString)
@@ -36,8 +45,8 @@ object FileUtil {
     subDirs.flatMap(getDataFiles)
   }
 
-  def traverseUnlabeledDataFiles(baseDir: String): Seq[String] = {
-    getDataFiles(baseDir)
+  def traverseUnlabeledDataFiles(baseDirPath: String): Seq[String] = {
+    getDataFiles(baseDirPath)
   }
 
   def getLabelFromFilePath(filePath: String): String = {
@@ -59,19 +68,19 @@ object FileUtil {
       .sum
   }
 
-  def dataFrameFromDirectory(baseDir: String, training: Boolean)(implicit spark: SparkSession): DataFrame = {
+  def dataFrameFromDirectory(baseDirPath: String, isTraining: Boolean)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     import org.apache.spark.sql.functions._
 
-    val fileSchema: StructType = new StructType()
+    val fileSchema = new StructType()
       .add("word", StringType)
       .add("word_count", IntegerType)
 
     val dirPattern = {
-      if (training)
-        Paths.get(baseDir, labelPattern + "/*.res").toString
+      if (isTraining)
+        Paths.get(baseDirPath, labelPattern + "/*.res").toString
       else
-        baseDir
+        Paths.get(baseDirPath, "/*.res").toString
     }
 
     val df = spark.read
@@ -85,12 +94,39 @@ object FileUtil {
       )
       .withColumn("input_file", input_file_name)
 
-    if (training) {
+    if (isTraining) {
       val getLabelStr = udf((path: String) => getLabelFromFilePath(path))
       val getLabel = udf((labelStr: String) => labelToInt(labelStr))
       df.withColumn("label_str", getLabelStr(col("input_file")))
         .withColumn("label", getLabel(col("label_str")))
     }
     else df
+  }
+
+  def recordReaderFromDirectory(baseDirPath: String, isTraining: Boolean)(implicit spark: SparkSession): RecordReader = {
+    val fileSchema = new Schema.Builder()
+      .addColumnString("word")
+      .addColumnInteger("word_count")
+      .build
+
+    val baseDir = new File(baseDirPath)
+
+    val fileSplit = new FileSplit(baseDir, Array("res"), isTraining)
+    //val csvTransformProcess = new TransformProcess.Builder(fileSchema).build
+
+    val rr = new CSVRecordReader(' ')
+    rr.initialize(fileSplit)
+
+    val iterator = new RecordReaderDataSetIterator(rr, 4)
+
+    var acc = 0
+    while (iterator.hasNext) {
+      val data = iterator.next
+      acc += 1
+    }
+
+    println(s"DataSet iterator had $acc elements")
+
+    return null
   }
 }

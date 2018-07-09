@@ -2,26 +2,23 @@ package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
 
+import net.ddns.akgunter.spark_learning.dl4j.util.FileUtil.{getLabelFromFilePath, labelPattern, labelToInt}
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, PCA}
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.ml.{Estimator, Pipeline}
-import org.apache.spark.sql.SparkSession
-
-import net.ddns.akgunter.spark_learning.data_processing._
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types._
+import org.datavec.api.transform.schema.Schema
+import net.ddns.akgunter.spark_learning.sparkml.data_processing._
 import net.ddns.akgunter.spark_learning.spark.CanSpark
+import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 object RunClassifier extends CanSpark {
 
-  def sparkMLTest(dataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(dataDir, "Training").toString
-    val validationDir = Paths.get(dataDir, "Validation").toString
-    //val testingDir = Paths.get(dataDir, "Testing").toString
-
-    val numClasses = getLabelDirectories(trainingDir).length
-
+  def runSparkML(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
@@ -45,11 +42,11 @@ object RunClassifier extends CanSpark {
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
-        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
+      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
-    val trainingData = dataFrameFromDirectory(trainingDir, training = true)
-    val validationData = dataFrameFromDirectory(validationDir, training = true)
+    val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
+    val validationData = dataFrameFromDirectory(validationDir, isTraining = true)
     //val testingData = dataFrameFromDirectory(testingDir, training = false)
 
     logger.info("Fitting preprocessing pipeline...")
@@ -64,6 +61,7 @@ object RunClassifier extends CanSpark {
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
 
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
+    val numClasses = getLabelDirectories(trainingDir).length
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val mlpc = new MultilayerPerceptronClassifier()
@@ -86,10 +84,23 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
+  def runDL4J(trainingDir: String, validationDir: String): Unit = {
+    recordReaderFromDirectory(trainingDir, isTraining = true)
+  }
+
+  def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
+    val trainingDir = Paths.get(dataDir, "Training").toString
+    val validationDir = Paths.get(dataDir, "Validation").toString
+    //val testingDir = Paths.get(dataDir, "Testing").toString
+
+    if (!useDL4J) runSparkML(trainingDir, validationDir)
+    else runDL4J(trainingDir, validationDir)
+  }
+
   def main(args: Array[String]): Unit = {
     val dataDir = args(0)
 
     println(s"Running with dataDir=$dataDir")
-    withSpark() { spark => sparkMLTest(dataDir)(spark) }
+    withSpark() { spark => runML(dataDir, useDL4J = true)(spark) }
   }
 }
