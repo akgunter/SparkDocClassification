@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, PCA}
+import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -47,14 +47,10 @@ object RunClassifier extends CanSpark {
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
       .setSelectorType("fpr")
-      .setFpr(0.0001)
-    val pca = new PCA()
-      .setInputCol("chi_sel_features")
-      .setK(100)
-      .setOutputCol("pca_features")
+      .setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel, pca))
+      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
@@ -172,6 +168,6 @@ object RunClassifier extends CanSpark {
     val dataDir = args(0)
 
     println(s"Running with dataDir=$dataDir")
-    withSpark() { spark => runML(dataDir, useDL4J = true)(spark) }
+    withSpark() { spark => runML(dataDir, useDL4J = false)(spark) }
   }
 }
