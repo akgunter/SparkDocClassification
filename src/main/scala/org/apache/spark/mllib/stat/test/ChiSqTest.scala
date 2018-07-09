@@ -94,7 +94,7 @@ private[spark] object ChiSqTest extends Logging {
       // chiSquared(data: RDD[(V1, V2)])
       val startCol = batch * batchSize
       val endCol = startCol + math.min(batchSize, numCols - startCol)
-      val pairCountsPreprocRDD = data.mapPartitions { iter =>
+      val pairCounts = data.mapPartitions { iter =>
         val distinctLabels = mutable.HashSet.empty[Double]
         val allDistinctFeatures: Map[Int, mutable.HashSet[Double]] =
           Map((startCol until endCol).map(col => (col, mutable.HashSet.empty[Double])): _*)
@@ -121,9 +121,10 @@ private[spark] object ChiSqTest extends Logging {
             (col, feature, label)
           }
         }
-      }
+      }.countByValue()
 
-      val pairCounts = pairCountsPreprocRDD.map(x => (x, 1L)).reduceByKey(_ + _)
+      println("TESTING IMPORT")
+      //val pairCounts = pairCountsPreprocRDD.map(x => (x, 1L)).reduceByKey(_ + _)
 
       if (labels == null) {
         // Do this only once for the first column since labels are invariant across features.
