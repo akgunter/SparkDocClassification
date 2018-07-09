@@ -12,11 +12,15 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.weights.WeightInit
+import org.deeplearning4j.spark.api.RDDTrainingApproach
+import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
+import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
@@ -46,7 +50,7 @@ object RunClassifier extends CanSpark {
       .setFpr(0.0001)
     val pca = new PCA()
       .setInputCol("chi_sel_features")
-      .setK(8000)
+      .setK(100)
       .setOutputCol("pca_features")
 
     val preprocPipeline = new Pipeline()
@@ -121,7 +125,7 @@ object RunClassifier extends CanSpark {
         new DataSet(fvec, lvec)
     }.toJavaRDD
 
-    val conf = new NeuralNetConfiguration.Builder()
+    val nnConf = new NeuralNetConfiguration.Builder()
       .activation(Activation.LEAKYRELU)
       .weightInit(WeightInit.XAVIER)
       .updater(new Nesterovs(0.02))
@@ -134,7 +138,25 @@ object RunClassifier extends CanSpark {
       .backprop(true)
       .build
 
+    val voidConfig = VoidConfiguration.builder()
+      .unicastPort(40123)
+      .networkMask("10.0.0.0/24")
+      .controllerAddress("127.0.0.1")
+      .build
 
+    val tm = new SharedTrainingMaster.Builder(voidConfig, 16)
+      .updatesThreshold(1e-3)
+      .rddTrainingApproach(RDDTrainingApproach.Direct)
+      .batchSizePerWorker(16)
+      .workersPerNode(4)
+      .build
+
+    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
+    (0 until 5).foreach {
+      epoch =>
+        sparkNet.fit(trainingRDD)
+        logger.info(s"Completed Epoch $epoch")
+    }
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {

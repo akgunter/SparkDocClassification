@@ -35,6 +35,6 @@ lazy val scalaclassifier =
           .exclude("org.codehaus.janino", "janino")
           .exclude("org.glassfish.hk2.external", "aopalliance-repackaged")
           .exclude("org.glassfish.hk2.external", "javax.inject"),
-        "org.bytedeco.javacpp-presets" % "openblas" %  "0.2.20-1.4.1"
+        "org.deeplearning4j" %% "dl4j-spark-parameterserver" % "1.0.0-beta_spark_2"
       )
     )
