@@ -14,6 +14,8 @@ lazy val scalaclassifier =
         case PathList("log4j.xml") => MergeStrategy.discard
         case PathList(xs @ _*) if xs.last == "UnusedStubClass.class" =>
           MergeStrategy.first
+        case PathList(xs @ _*) if xs.last == "overview.html" =>
+          MergeStrategy.first
         case x =>
           val oldStrategy = (assemblyMergeStrategy in assembly).value
           oldStrategy(x)
@@ -38,6 +40,7 @@ lazy val scalaclassifier =
         ("org.deeplearning4j" %% "dl4j-spark-parameterserver" % "1.0.0-beta_spark_2")
           .exclude("org.apache.tomcat", "tomcat-servlet-api")
           .exclude("io.aeron", "aeron-all")
+          .exclude("commons-logging", "commons-logging")
           .exclude("org.iq80.leveldb", "leveldb-api")
           .exclude("org.jetbrains", "annotations")
           .exclude("org.slf4j", "jcl-over-slf4j")
