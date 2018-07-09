@@ -37,5 +37,6 @@ lazy val scalaclassifier =
           .exclude("org.glassfish.hk2.external", "javax.inject"),
         ("org.deeplearning4j" %% "dl4j-spark-parameterserver" % "1.0.0-beta_spark_2")
           .exclude("org.apache.tomcat", "tomcat-servlet-api")
+          .exclude("io.aeron", "aeron-all")
       )
     )
