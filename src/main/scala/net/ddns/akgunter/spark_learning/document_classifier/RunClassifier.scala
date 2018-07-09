@@ -107,13 +107,16 @@ object RunClassifier extends CanSpark {
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
     if (useDL4J) {
+
+      runDL4J(20, 5)
+    }
+    else {
       val trainingDir = Paths.get(dataDir, "Training").toString
       val validationDir = Paths.get(dataDir, "Validation").toString
       val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
 
-      runDL4J(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
+      runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
     }
-    else runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
   }
 
   def main(args: Array[String]): Unit = {
