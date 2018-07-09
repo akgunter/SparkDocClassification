@@ -97,27 +97,22 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(trainingData: DataFrame,
-              validationData: DataFrame,
-              featuresCol: String,
-              labelCol: String,
-              numFeatures: Int,
+  def runDL4J(numFeatures: Int,
               numClasses: Int)(implicit spark: SparkSession): Unit = {
-
-    val trainingRDD = trainingData.toJavaRDD
-
-    val numTrainingSamples = trainingRDD.count.toInt
+    val numTrainingSamples = 100
 
     val sparseFactory = Nd4j.sparseFactory()
     println(sparseFactory.zeros(numTrainingSamples, numClasses))
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(dataDir, "Training").toString
-    val validationDir = Paths.get(dataDir, "Validation").toString
-    val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
+    if (useDL4J) {
+      val trainingDir = Paths.get(dataDir, "Training").toString
+      val validationDir = Paths.get(dataDir, "Validation").toString
+      val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
 
-    if (useDL4J) runDL4J(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
+      runDL4J(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
+    }
     else runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
   }
 
