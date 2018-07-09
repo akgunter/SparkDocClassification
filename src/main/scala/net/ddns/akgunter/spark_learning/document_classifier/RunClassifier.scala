@@ -168,6 +168,6 @@ object RunClassifier extends CanSpark {
     val dataDir = args(0)
 
     println(s"Running with dataDir=$dataDir")
-    withSpark() { spark => runML(dataDir, useDL4J = false)(spark) }
+    withSpark() { spark => runML(dataDir, useDL4J = true)(spark) }
   }
 }
