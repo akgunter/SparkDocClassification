@@ -30,6 +30,7 @@ lazy val scalaclassifier =
           .exclude("org.apache.hadoop", "hadoop-yarn-api")
           .exclude("org.glassfish.hk2.external", "aopalliance-repackaged")
           .exclude("org.glassfish.hk2.external", "javax.inject")
+          .exclude("org.slf4j", "slf4j-log4j12")
           .exclude("org.slf4j", "jcl-over-slf4j")
           .exclude("org.jetbrains", "annotations"),
         ("org.datavec" % "datavec-spark_2.11" % "1.0.0-beta_spark_2")
@@ -45,8 +46,5 @@ lazy val scalaclassifier =
           .exclude("io.aeron", "aeron-all")
           .exclude("commons-logging", "commons-logging")
           .exclude("org.iq80.leveldb", "leveldb-api")
-          .exclude("org.jetbrains", "annotations")
-          .exclude("org.slf4j", "jcl-over-slf4j")
-          .exclude("org.slf4j", "slf4j-log4j12")
       )
     )
