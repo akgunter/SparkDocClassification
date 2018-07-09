@@ -108,18 +108,18 @@ object RunClassifier extends CanSpark {
               numFeatures: Int,
               numClasses: Int)(implicit spark: SparkSession): Unit = {
 
-    val trainingRDD = trainingData.toJavaRDD.map {
+    val trainingRDD = trainingData.rdd.map {
       row =>
         val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
         val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
         new DataSet(fvec, lvec)
-    }
-    val validationRDD = validationData.toJavaRDD.map {
+    }.toJavaRDD
+    val validationRDD = validationData.rdd.map {
       row =>
         val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
         val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
         new DataSet(fvec, lvec)
-    }
+    }.toJavaRDD
 
     val conf = new NeuralNetConfiguration.Builder()
       .activation(Activation.LEAKYRELU)
@@ -134,7 +134,7 @@ object RunClassifier extends CanSpark {
       .backprop(true)
       .build
 
-    
+
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
