@@ -17,7 +17,7 @@ class CommonElementFilterModel protected (
   )
   override protected val requiredOutputColumns: Set[Param[String]] = Set()
 
-  protected[data_processing] def this(wordsToKeep: DataFrame) = {
+  protected[sparkml_processing] def this(wordsToKeep: DataFrame) = {
     this(wordsToKeep, Identifiable.randomUID("CommonElementFilterModel"))
   }
 

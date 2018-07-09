@@ -22,7 +22,7 @@ class WordCountToVecModel protected (
     vectorCol
   )
 
-  protected[data_processing] def this(ordering: Dataset[_], maxIndex: Long) = {
+  protected[sparkml_processing] def this(ordering: Dataset[_], maxIndex: Long) = {
     this(ordering, maxIndex, Identifiable.randomUID("WordCountToVecModel"))
   }
 

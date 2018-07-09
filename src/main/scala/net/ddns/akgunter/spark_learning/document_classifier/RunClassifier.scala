@@ -2,7 +2,7 @@ package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
 
-import net.ddns.akgunter.spark_learning.dl4j.util.FileUtil.{getLabelFromFilePath, labelPattern, labelToInt}
+import net.ddns.akgunter.spark_learning.util.FileUtil._
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, PCA}
@@ -11,7 +11,7 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
 import org.datavec.api.transform.schema.Schema
-import net.ddns.akgunter.spark_learning.sparkml.data_processing._
+import net.ddns.akgunter.spark_learning.sparkml_processing._
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
