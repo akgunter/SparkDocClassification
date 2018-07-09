@@ -17,7 +17,7 @@ class VectorizeFileRow protected (
   final val mapCol = new Param[String](this, "map", "The buffer's map column")
   setDefault(mapCol, "vfr_buffer_map")
 
-  protected[data_processing] def this(dictionarySize: Int) = {
+  protected[sparkml_processing] def this(dictionarySize: Int) = {
     this(dictionarySize, Identifiable.randomUID("VectorizeFileRow"))
   }
 

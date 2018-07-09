@@ -84,7 +84,7 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(trainingDir: String, validationDir: String): Unit = {
+  def runDL4J(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
     recordReaderFromDirectory(trainingDir, isTraining = true)
   }
 
