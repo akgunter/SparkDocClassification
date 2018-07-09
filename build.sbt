@@ -39,10 +39,7 @@ lazy val scalaclassifier =
           .exclude("org.apache.hadoop", "hadoop-yarn-api")
           .exclude("org.codehaus.janino", "janino")
           .exclude("org.glassfish.hk2.external", "aopalliance-repackaged")
-          .exclude("org.glassfish.hk2.external", "javax.inject")
-          .exclude("org.slf4j", "jcl-over-slf4j")
-          .exclude("org.slf4j", "slf4j-log4j12")
-          .exclude("org.jetbrains", "annotations"),
+          .exclude("org.glassfish.hk2.external", "javax.inject"),
         ("org.deeplearning4j" %% "dl4j-spark-parameterserver" % "1.0.0-beta_spark_2")
           .exclude("org.apache.tomcat", "tomcat-servlet-api")
           .exclude("io.aeron", "aeron-all")
