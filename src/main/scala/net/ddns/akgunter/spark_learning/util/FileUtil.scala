@@ -13,6 +13,7 @@ import org.datavec.api.split.FileSplit
 import org.datavec.api.transform.schema.Schema
 import org.datavec.api.transform.TransformProcess
 import org.datavec.spark.transform.SparkTransformExecutor
+import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 
 object FileUtil {
@@ -101,32 +102,5 @@ object FileUtil {
         .withColumn("label", getLabel(col("label_str")))
     }
     else df
-  }
-
-  def recordReaderFromDirectory(baseDirPath: String, isTraining: Boolean)(implicit spark: SparkSession): RecordReader = {
-    val fileSchema = new Schema.Builder()
-      .addColumnString("word")
-      .addColumnInteger("word_count")
-      .build
-
-    val baseDir = new File(baseDirPath)
-
-    val fileSplit = new FileSplit(baseDir, Array("res"), isTraining)
-    //val csvTransformProcess = new TransformProcess.Builder(fileSchema).build
-
-    val rr = new CSVRecordReader(' ')
-    rr.initialize(fileSplit)
-
-    val iterator = new RecordReaderDataSetIterator(rr, 4)
-
-    var acc = 0
-    while (iterator.hasNext) {
-      val data = iterator.next
-      acc += 1
-    }
-
-    println(s"DataSet iterator had $acc elements")
-
-    return null
   }
 }
