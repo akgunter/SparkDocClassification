@@ -2,18 +2,22 @@ package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
 
-import net.ddns.akgunter.spark_learning.util.FileUtil._
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, PCA}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.types._
 
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration
+import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
+import org.deeplearning4j.nn.weights.WeightInit
+import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.dataset.DataSet
+import org.nd4j.linalg.learning.config.Nesterovs
+import org.nd4j.linalg.lossfunctions.LossFunctions
 
-import net.ddns.akgunter.spark_learning.sparkml_processing._
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
@@ -97,26 +101,49 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(numFeatures: Int,
+  def runDL4J(trainingData: DataFrame,
+              validationData: DataFrame,
+              featuresCol: String,
+              labelCol: String,
+              numFeatures: Int,
               numClasses: Int)(implicit spark: SparkSession): Unit = {
-    val numTrainingSamples = 100
 
-    val sparseFactory = Nd4j.sparseFactory()
-    println(sparseFactory.zeros(numTrainingSamples, numClasses))
+    val trainingRDD = trainingData.toJavaRDD.map {
+      row =>
+        val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
+        val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
+        new DataSet(fvec, lvec)
+    }
+    val validationRDD = validationData.toJavaRDD.map {
+      row =>
+        val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
+        val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
+        new DataSet(fvec, lvec)
+    }
+
+    val conf = new NeuralNetConfiguration.Builder()
+      .activation(Activation.LEAKYRELU)
+      .weightInit(WeightInit.XAVIER)
+      .updater(new Nesterovs(0.02))
+      .l2(1e-4)
+      .list()
+      .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(numClasses).build)
+      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                  .activation(Activation.SOFTMAX).nIn(numFeatures).nOut(numClasses).build)
+      .pretrain(false)
+      .backprop(true)
+      .build
+
+    
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
-    if (useDL4J) {
+    val trainingDir = Paths.get(dataDir, "Training").toString
+    val validationDir = Paths.get(dataDir, "Validation").toString
+    val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
 
-      runDL4J(20, 5)
-    }
-    else {
-      val trainingDir = Paths.get(dataDir, "Training").toString
-      val validationDir = Paths.get(dataDir, "Validation").toString
-      val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
-
-      runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
-    }
+    if (useDL4J) runDL4J(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
+    else runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
   }
 
   def main(args: Array[String]): Unit = {
