@@ -128,6 +128,7 @@ object RunClassifier extends CanSpark {
         new DataSet(fvec, lvec)
     }.toJavaRDD
 
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val nnConf = new NeuralNetConfiguration.Builder()
       .activation(Activation.LEAKYRELU)
       .weightInit(WeightInit.XAVIER)
@@ -154,6 +155,8 @@ object RunClassifier extends CanSpark {
       .build
 
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
+
+    logger.info("Training neural network...")
     (0 until 5).foreach {
       epoch =>
         sparkNet.fit(trainingRDD)
