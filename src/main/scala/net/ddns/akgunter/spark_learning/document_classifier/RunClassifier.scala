@@ -174,7 +174,7 @@ object RunClassifier extends CanSpark {
     val dataDir = args(0)
     val useDL4J = args.length > 1 && args(1) == "dl4j"
 
-    println(s"Running with dataDir=$dataDir")
+    println(s"Running with dataDir=$dataDir and useDL4J=$useDL4J")
     withSpark() { spark => runML(dataDir, useDL4J)(spark) }
   }
 }
