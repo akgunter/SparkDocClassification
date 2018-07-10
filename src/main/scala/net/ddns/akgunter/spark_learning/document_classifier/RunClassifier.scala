@@ -69,7 +69,7 @@ object RunClassifier extends CanSpark {
     val featuresColParam = lastStage.getParam("outputCol")
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
 
-    val numFeatures = trainingData.head.getAs[SparseVector](featuresCol).size
+    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
     val numClasses = getLabelDirectories(trainingDir).length
 
     (trainingDataProcessed, validationDataProcessed, featuresCol, "label", numFeatures, numClasses)
