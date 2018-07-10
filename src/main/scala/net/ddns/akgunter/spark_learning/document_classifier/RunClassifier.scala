@@ -46,8 +46,10 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("tfidf_vector")
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
-      .setSelectorType("fpr")
-      .setFpr(0.00001)
+      .setSelectorType("fdr")
+      .setFdr(0.1)
+      //.setSelectorType("fpr")
+      //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
       .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
@@ -57,11 +59,11 @@ object RunClassifier extends CanSpark {
     val validationData = dataFrameFromDirectory(validationDir, isTraining = true)
 
     logger.info("Fitting preprocessing pipeline...")
-    val dataModel = preprocPipeline.fit(trainingData)
+    val preprocModel = preprocPipeline.fit(trainingData)
 
     logger.info("Preprocessing data...")
-    val trainingDataProcessed = dataModel.transform(trainingData)
-    val validationDataProcessed = dataModel.transform(validationData)
+    val trainingDataProcessed = preprocModel.transform(trainingData)
+    val validationDataProcessed = preprocModel.transform(validationData)
 
     val lastStage = preprocPipeline.getStages.last
     val featuresColParam = lastStage.getParam("outputCol")
