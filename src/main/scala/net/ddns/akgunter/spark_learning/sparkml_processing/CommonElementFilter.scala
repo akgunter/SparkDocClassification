@@ -27,8 +27,6 @@ class CommonElementFilter(override val uid: String)
   def setDropFreq(value: Double): CommonElementFilter = set(dropFreq, value)
 
   override def fit(dataset: Dataset[_]): CommonElementFilterModel = {
-    this.transformSchema()
-
     val numDocs = dataset.select($(fileCol)).distinct.count
 
     val wordsToKeep = dataset.groupBy($(wordCol))
