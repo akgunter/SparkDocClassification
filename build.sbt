@@ -33,6 +33,7 @@ lazy val scalaclassifier =
           .exclude("org.slf4j", "slf4j-log4j12")
           .exclude("org.slf4j", "jcl-over-slf4j")
           .exclude("org.jetbrains", "annotations"),
+        "org.deeplearning4j" %% "scalnet" % "1.0.0-beta",
         ("org.datavec" % "datavec-spark_2.11" % "1.0.0-beta_spark_2")
           .exclude("commons-beanutils", "commons-beanutils")
           .exclude("commons-collections", "commons-collections")
