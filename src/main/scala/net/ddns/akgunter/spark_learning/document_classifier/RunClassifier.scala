@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF}
+import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -34,8 +34,13 @@ object RunClassifier extends CanSpark {
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
+    val vectorSlicer = new VectorSlicer()
+      .setInputCol("raw_word_vector")
+      .setOutputCol("sliced_vector")
+      .setIndices((0 to 100).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
+      //.setInputCol("raw_word_vector")
       .setInputCol("raw_word_vector")
       .setOutputCol("binarized_word_vector")
     val idf = new IDF()
@@ -52,7 +57,7 @@ object RunClassifier extends CanSpark {
       //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
+      .setStages(Array(commonElementFilter, wordVectorizer, vectorSlicer, binarizer, idf))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
