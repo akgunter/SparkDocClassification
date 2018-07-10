@@ -147,10 +147,9 @@ object RunClassifier extends CanSpark {
       .controllerAddress("127.0.0.1")
       .build
 
-    val tm = new SharedTrainingMaster.Builder(voidConfig, 1)
+    val tm = new SharedTrainingMaster.Builder(voidConfig, 16)
       .updatesThreshold(1e-3)
       .rddTrainingApproach(RDDTrainingApproach.Direct)
-      .batchSizePerWorker(1)
       .workersPerNode(4)
       .build
 
