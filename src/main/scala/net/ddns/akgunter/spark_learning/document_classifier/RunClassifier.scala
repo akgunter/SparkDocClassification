@@ -40,8 +40,8 @@ object RunClassifier extends CanSpark {
       .setIndices((0 to 100).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
-      //.setInputCol("raw_word_vector")
-      .setInputCol("sliced_vector")
+      .setInputCol("raw_word_vector")
+      //.setInputCol("sliced_vector")
       .setOutputCol("binarized_word_vector")
     val idf = new IDF()
       .setInputCol("binarized_word_vector")
@@ -57,7 +57,7 @@ object RunClassifier extends CanSpark {
       //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, vectorSlicer))
+      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
