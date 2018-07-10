@@ -263,7 +263,7 @@ public class CustomTrainingMaster extends SharedTrainingMaster {
                 throw new DL4JInvalidConfigException("shakeFrequency should be non-negative value");
 
             if (frequency == 1)
-                log.warn("shakeFrequency of 1 means that all updates will be sparse, and might lead to worse performance");
+                System.out.println("shakeFrequency of 1 means that all updates will be sparse, and might lead to worse performance");
 
             this.shakeFrequency = frequency;
             return this;

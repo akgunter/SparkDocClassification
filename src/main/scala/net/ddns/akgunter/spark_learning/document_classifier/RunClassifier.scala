@@ -8,7 +8,6 @@ import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
-
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.weights.WeightInit
@@ -19,9 +18,8 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import org.deeplearning4j.spark.parameterserver.training.{SharedTrainingMaster, CustomTrainingMaster}
+import org.deeplearning4j.spark.parameterserver.training.{CustomTrainingMaster, SharedTrainingMaster}
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
-
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
