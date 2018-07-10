@@ -37,7 +37,7 @@ object RunClassifier extends CanSpark {
     val vectorSlicer = new VectorSlicer()
       .setInputCol("raw_word_vector")
       .setOutputCol("sliced_vector")
-      .setIndices((0 to 100).toArray)
+      .setIndices((0 until 10).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
       .setInputCol("raw_word_vector")
