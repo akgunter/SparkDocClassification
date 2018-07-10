@@ -19,7 +19,7 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
+import org.deeplearning4j.spark.parameterserver.training.{SharedTrainingMaster, CustomTrainingMaster}
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
@@ -34,10 +34,14 @@ object RunClassifier extends CanSpark {
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
+    val vectorSlicer = new VectorSlicer()
+      .setInputCol("raw_word_vector")
+      .setOutputCol("sliced_vector")
+      .setIndices((0 until 10).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
-      .setInputCol("raw_word_vector")
-      //.setInputCol("sliced_vector")
+      //.setInputCol("raw_word_vector")
+      .setInputCol("sliced_vector")
       .setOutputCol("binarized_word_vector")
     val idf = new IDF()
       .setInputCol("binarized_word_vector")
@@ -48,12 +52,12 @@ object RunClassifier extends CanSpark {
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
       .setSelectorType("fdr")
-      .setFdr(0.01)
+      .setFdr(0.005)
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
+      .setStages(Array(commonElementFilter, wordVectorizer, vectorSlicer))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
@@ -144,12 +148,16 @@ object RunClassifier extends CanSpark {
       .controllerAddress("127.0.0.1")
       .build
 
-    val tm = new SharedTrainingMaster.Builder(voidConfig, 16)
+    val tm = new CustomTrainingMaster.Builder(voidConfig, 1)
       .updatesThreshold(1e-3)
       .rddTrainingApproach(RDDTrainingApproach.Direct)
+      .batchSizePerWorker(1)
       .workersPerNode(4)
       .build
 
+    logger.info(s"TM Config values: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
+
+    /*
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
 
     logger.info("Training neural network...")
@@ -158,6 +166,7 @@ object RunClassifier extends CanSpark {
         sparkNet.fit(trainingRDD)
         logger.info(s"Completed Epoch $epoch")
     }
+    */
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
