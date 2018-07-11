@@ -147,7 +147,7 @@ object RunClassifier extends CanSpark {
       .build
 
     val voidConfig = VoidConfiguration.builder()
-      .unicastPort(4045)
+      .unicastPort(4050)
       .networkMask("10.0.0.0/24")
       .controllerAddress("127.0.0.1")
       .build
@@ -164,11 +164,13 @@ object RunClassifier extends CanSpark {
     logger.info("Training neural network...")
     (0 until 5).foreach {
       epoch =>
-        //logger.info(s"TM Config values BEFORE: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         sparkNet.fit(trainingRDD)
-        //logger.info(s"TM Config values AFTER: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         logger.info(s"Completed Epoch $epoch")
     }
+
+    logger.info("Calculating predictions...")
+    val trainingPredictions = sparkNet.evaluate(trainingRDD)
+    val validationPredictions = sparkNet.evaluate(validationRDD)
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
