@@ -154,16 +154,15 @@ object RunClassifier extends CanSpark {
       .build
 
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
-    logger.info(s"TM Config values: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
 
-    /*
     logger.info("Training neural network...")
     (0 until 5).foreach {
       epoch =>
+        logger.info(s"TM Config values BEFORE: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         sparkNet.fit(trainingRDD)
+        logger.info(s"TM Config values AFTER: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         logger.info(s"Completed Epoch $epoch")
     }
-    */
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
