@@ -173,11 +173,7 @@ object RunClassifier extends CanSpark {
 
     val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
     val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
-
-    val validationNDArray = validationRDD
-        .map(_.getFeatureMatrix)
-        .reduce(Nd4j.concat(0, _, _))
-
+    
     //logger.info("Calculating training predictions...")
     //val trainingPredictions = trainedNet.predict(trainingDataSet)
 
