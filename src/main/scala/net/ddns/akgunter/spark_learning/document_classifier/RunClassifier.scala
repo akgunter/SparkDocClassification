@@ -119,7 +119,7 @@ object RunClassifier extends CanSpark {
         val label = row.getAs[Int](labelCol)
         val fvec = Nd4j.create(sparseVector)
         val lvec = Nd4j.zeros(numClasses)
-        lvec(label) = 1.0
+        lvec.putScalar(label, 1)
         new DataSet(fvec, lvec)
     }.toJavaRDD
     val validationRDD = validationData.rdd.map {
@@ -128,7 +128,7 @@ object RunClassifier extends CanSpark {
         val label = row.getAs[Int](labelCol)
         val fvec = Nd4j.create(sparseVector)
         val lvec = Nd4j.zeros(numClasses)
-        lvec(label) = 1.0
+        lvec.putScalar(label, 1)
         new DataSet(fvec, lvec)
     }.toJavaRDD
 
