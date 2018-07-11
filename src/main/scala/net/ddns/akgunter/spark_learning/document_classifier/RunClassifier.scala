@@ -153,11 +153,10 @@ object RunClassifier extends CanSpark {
       .workersPerNode(4)
       .build
 
+    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
     logger.info(s"TM Config values: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
 
     /*
-    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
-
     logger.info("Training neural network...")
     (0 until 5).foreach {
       epoch =>
