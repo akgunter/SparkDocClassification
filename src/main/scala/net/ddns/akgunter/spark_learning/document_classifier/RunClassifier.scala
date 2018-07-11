@@ -135,7 +135,7 @@ object RunClassifier extends CanSpark {
       .list()
       .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(numClasses).build)
       .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                  .activation(Activation.SOFTMAX).nIn(numFeatures).nOut(numClasses).build)
+                  .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
       .pretrain(false)
       .backprop(true)
       .build
