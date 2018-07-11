@@ -172,15 +172,19 @@ object RunClassifier extends CanSpark {
     val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
     val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
 
+    val validationNDArray = validationRDD
+        .map(_.getFeatureMatrix)
+        .reduce(Nd4j.concat(0, _, _))
+
     //logger.info("Calculating training predictions...")
     //val trainingPredictions = trainedNet.predict(trainingDataSet)
 
     logger.info("Calculating validation predictions...")
-    val validationPredictions = trainedNet.predict(validationDataSet)
+    val validationPredictions = Nd4j.create(trainedNet.predict(validationDataSet.getFeatureMatrix))
 
-    logger.info(s"First result: ${validationPredictions.get(0)}")
-    //val eval = new Evaluation(numClasses)
-    //eval.eval(trainingDataSet.getLabels, trainingPredictions)
+    val eval = new Evaluation(numClasses)
+    eval.eval(validationDataSet.getLabels, validationPredictions)
+    logger.info(eval.stats())
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
