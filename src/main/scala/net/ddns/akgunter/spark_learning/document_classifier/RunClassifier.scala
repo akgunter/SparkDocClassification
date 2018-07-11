@@ -115,14 +115,20 @@ object RunClassifier extends CanSpark {
 
     val trainingRDD = trainingData.rdd.map {
       row =>
-        val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
-        val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
+        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
+        val label = row.getAs[Int](labelCol)
+        val fvec = Nd4j.create(sparseVector)
+        val lvec = Nd4j.zeros(numClasses)
+        lvec(label) = 1.0
         new DataSet(fvec, lvec)
     }.toJavaRDD
     val validationRDD = validationData.rdd.map {
       row =>
-        val fvec = Nd4j.create(row.getAs[SparseVector](featuresCol).toArray)
-        val lvec = Nd4j.create(Array(row.getAs[Int](labelCol).toFloat))
+        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
+        val label = row.getAs[Int](labelCol)
+        val fvec = Nd4j.create(sparseVector)
+        val lvec = Nd4j.zeros(numClasses)
+        lvec(label) = 1.0
         new DataSet(fvec, lvec)
     }.toJavaRDD
 
