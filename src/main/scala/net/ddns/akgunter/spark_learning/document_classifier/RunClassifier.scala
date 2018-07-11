@@ -188,7 +188,10 @@ object RunClassifier extends CanSpark {
       .map(_.indexOf(1.0).toDouble))
 
     eval.eval(realLabels, validationPredictions)
-    logger.info(eval.stats())
+    (0 until validationPredictions.length).foreach {
+      idx =>
+        logger.info(s"Correct: ${realLabels(idx)}, Predicted: ${validationPredictions.getDouble(idx)}")
+    }
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
