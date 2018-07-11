@@ -147,7 +147,7 @@ object RunClassifier extends CanSpark {
       .build
 
     val voidConfig = VoidConfiguration.builder()
-      .unicastPort(40123)
+      .unicastPort(4045)
       .networkMask("10.0.0.0/24")
       .controllerAddress("127.0.0.1")
       .build
