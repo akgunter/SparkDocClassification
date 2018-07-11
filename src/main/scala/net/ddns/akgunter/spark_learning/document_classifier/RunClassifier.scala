@@ -184,10 +184,10 @@ object RunClassifier extends CanSpark {
     )
 
     val eval = new Evaluation(numClasses)
-    val realLables = validationDataSet.getLabels.toDoubleMatrix
+    val realLabels = validationDataSet.getLabels.toDoubleMatrix
       .map(_.indexOf(1.0))
 
-    eval.eval(validationDataSet.getLabels, validationPredictions)
+    eval.eval(realLabels, validationPredictions)
     logger.info(eval.stats())
   }
 
