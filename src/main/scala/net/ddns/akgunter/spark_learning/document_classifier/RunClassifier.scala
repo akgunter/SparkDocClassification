@@ -190,7 +190,7 @@ object RunClassifier extends CanSpark {
     eval.eval(realLabels, validationPredictions)
     (0 until validationPredictions.length).foreach {
       idx =>
-        logger.info(s"Correct: ${realLabels(idx)}, Predicted: ${validationPredictions.getDouble(idx)}")
+        logger.info(s"Correct: ${realLabels.getDouble(idx)}, Predicted: ${validationPredictions.getDouble(idx)}")
     }
   }
 
