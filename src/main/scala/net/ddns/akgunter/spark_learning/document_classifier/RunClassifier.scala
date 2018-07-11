@@ -8,18 +8,22 @@ import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
+
+import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
+import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
+
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import org.deeplearning4j.spark.parameterserver.training.{CustomTrainingMaster, SharedTrainingMaster}
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
+
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
@@ -162,15 +166,21 @@ object RunClassifier extends CanSpark {
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
 
     logger.info("Training neural network...")
-    (0 until 5).foreach {
-      epoch =>
-        sparkNet.fit(trainingRDD)
-        logger.info(s"Completed Epoch $epoch")
-    }
+    val trainedNet = sparkNet.fit(trainingRDD)
 
-    logger.info("Calculating predictions...")
-    val trainingPredictions = sparkNet.evaluate(trainingRDD)
-    val validationPredictions = sparkNet.evaluate(validationRDD)
+    import java.util.{ArrayList => JavaArrayList}
+    val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
+    val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
+
+    //logger.info("Calculating training predictions...")
+    //val trainingPredictions = trainedNet.predict(trainingDataSet)
+
+    logger.info("Calculating validation predictions...")
+    val validationPredictions = trainedNet.predict(validationDataSet)
+
+    logger.info(s"First result: ${validationPredictions.get(0)}")
+    //val eval = new Evaluation(numClasses)
+    //eval.eval(trainingDataSet.getLabels, trainingPredictions)
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
