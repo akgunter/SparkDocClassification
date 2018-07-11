@@ -152,7 +152,7 @@ object RunClassifier extends CanSpark {
       .controllerAddress("127.0.0.1")
       .build
 
-    val tm = new CustomTrainingMaster.Builder(voidConfig, 1)
+    val tm = new SharedTrainingMaster.Builder(voidConfig, 1)
       .updatesThreshold(1e-3)
       .rddTrainingApproach(RDDTrainingApproach.Direct)
       .batchSizePerWorker(1)
@@ -164,9 +164,9 @@ object RunClassifier extends CanSpark {
     logger.info("Training neural network...")
     (0 until 5).foreach {
       epoch =>
-        logger.info(s"TM Config values BEFORE: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
+        //logger.info(s"TM Config values BEFORE: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         sparkNet.fit(trainingRDD)
-        logger.info(s"TM Config values AFTER: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
+        //logger.info(s"TM Config values AFTER: ${tm.getBatchSizePerWorker}, ${tm.getNumObjectsEachWorker}, ${tm.getRDDDataSetNumExamples}")
         logger.info(s"Completed Epoch $epoch")
     }
   }
