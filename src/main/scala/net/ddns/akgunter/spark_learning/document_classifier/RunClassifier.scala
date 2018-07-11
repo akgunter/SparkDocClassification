@@ -169,6 +169,8 @@ object RunClassifier extends CanSpark {
     val trainedNet = sparkNet.fit(trainingRDD)
 
     import java.util.{ArrayList => JavaArrayList}
+    import scala.collection.JavaConverters._
+
     val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
     val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
 
@@ -180,7 +182,10 @@ object RunClassifier extends CanSpark {
     //val trainingPredictions = trainedNet.predict(trainingDataSet)
 
     logger.info("Calculating validation predictions...")
-    val validationPredictions = Nd4j.create(trainedNet.predict(validationDataSet.getFeatureMatrix))
+    val validationPredictions = Nd4j.create(
+      trainedNet.predict(validationDataSet.getFeatureMatrix)
+      .map(_.toDouble)
+    )
 
     val eval = new Evaluation(numClasses)
     eval.eval(validationDataSet.getLabels, validationPredictions)
