@@ -156,6 +156,7 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir, schemaDir)
     val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
 
+    logger.info(s"TEST: ${trainingDataProcessed.columns.mkString(", ")}")
     val Array(wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
     val featuresCol = "raw_word_vector"
     val numFeatures = dictionaryData.count.toInt
