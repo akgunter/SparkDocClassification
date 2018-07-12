@@ -100,10 +100,9 @@ object RunClassifier extends CanSpark {
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
     val dictionary = wordVectorizerModel.getDictionary
     dictionary.write
-      .format("com.databricks.spark.csv")
       .mode("overwrite")
       .option("header", "true")
-      .save(dictionaryFilePath)
+      .csv(dictionaryFilePath)
 
     import org.apache.spark.sql.functions.{col, udf}
 
@@ -125,10 +124,9 @@ object RunClassifier extends CanSpark {
         col(labelCol)
       )
       .write
-      .format("com.databricks.spark.csv")
       .mode("overwrite")
       .option("header", "true")
-      .save(trainingDataFilePath)
+      .csv(trainingDataFilePath)
 
     validationDataProcessed.select(
       getSparseIndices(col(featuresCol)) as wordIndicesCol,
@@ -136,10 +134,9 @@ object RunClassifier extends CanSpark {
       col(labelCol)
     )
     .write
-    .format("com.databricks.spark.csv")
     .mode("overwrite")
     .option("header", "true")
-    .save(validationDataFilePath)
+    .csv(validationDataFilePath)
   }
 
   def runSparkML()(implicit spark: SparkSession): Unit = {
