@@ -68,7 +68,7 @@ object RunClassifier extends CanSpark {
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
-    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
+    val preprocStages = Array(commonElementFilter, wordVectorizer, vectorSlicer)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
@@ -205,55 +205,55 @@ object RunClassifier extends CanSpark {
   }
 
   def loadData(trainingDir: String, validationDir: String)(implicit spark: SparkSession):
-  (DataFrame, DataFrame, String, String, Integer, Integer) = {
+    (DataFrame, DataFrame, String, String, Integer, Integer) = {
 
-    val commonElementFilter = new CommonElementFilter()
-      .setDropFreq(0.1)
-    val wordVectorizer = new WordCountToVec()
-    val vectorSlicer = new VectorSlicer()
-      .setInputCol("raw_word_vector")
-      .setOutputCol("sliced_vector")
-      .setIndices((0 until 10).toArray)
-    val binarizer = new Binarizer()
-      .setThreshold(0.0)
-      //.setInputCol("raw_word_vector")
-      .setInputCol("sliced_vector")
-      .setOutputCol("binarized_word_vector")
-    val idf = new IDF()
-      .setInputCol("binarized_word_vector")
-      .setOutputCol("tfidf_vector")
-      .setMinDocFreq(2)
-    val chiSel = new ChiSqSelector()
-      .setFeaturesCol("tfidf_vector")
-      .setLabelCol("label")
-      .setOutputCol("chi_sel_features")
-      .setSelectorType("fdr")
-      .setFdr(0.005)
+      val commonElementFilter = new CommonElementFilter()
+        .setDropFreq(0.1)
+      val wordVectorizer = new WordCountToVec()
+      val vectorSlicer = new VectorSlicer()
+        .setInputCol("raw_word_vector")
+        .setOutputCol("sliced_vector")
+        .setIndices((0 until 10).toArray)
+      val binarizer = new Binarizer()
+        .setThreshold(0.0)
+        .setInputCol("raw_word_vector")
+        //.setInputCol("sliced_vector")
+        .setOutputCol("binarized_word_vector")
+      val idf = new IDF()
+        .setInputCol("binarized_word_vector")
+        .setOutputCol("tfidf_vector")
+        .setMinDocFreq(2)
+      val chiSel = new ChiSqSelector()
+        .setFeaturesCol("tfidf_vector")
+        .setLabelCol("label")
+        .setOutputCol("chi_sel_features")
+        .setSelectorType("fdr")
+        .setFdr(0.005)
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
-    val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, vectorSlicer, binarizer))
+      val preprocPipeline = new Pipeline()
+        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
-    logger.info("Loading data...")
-    val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
-    val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
+      logger.info("Loading data...")
+      val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
+      val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
 
-    logger.info("Fitting preprocessing pipeline...")
-    val preprocModel = preprocPipeline.fit(trainingData)
+      logger.info("Fitting preprocessing pipeline...")
+      val preprocModel = preprocPipeline.fit(trainingData)
 
-    logger.info("Preprocessing data...")
-    val trainingDataProcessed = preprocModel.transform(trainingData)
-    val validationDataProcessed = preprocModel.transform(validationData)
+      logger.info("Preprocessing data...")
+      val trainingDataProcessed = preprocModel.transform(trainingData)
+      val validationDataProcessed = preprocModel.transform(validationData)
 
-    val lastStage = preprocPipeline.getStages.last
-    val featuresColParam = lastStage.getParam("outputCol")
-    val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
+      val lastStage = preprocPipeline.getStages.last
+      val featuresColParam = lastStage.getParam("outputCol")
+      val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
 
-    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
-    val numClasses = getLabelDirectories(trainingDir).length
+      val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
+      val numClasses = getLabelDirectories(trainingDir).length
 
-    (trainingDataProcessed, validationDataProcessed, featuresCol, "label", numFeatures, numClasses)
+      (trainingDataProcessed, validationDataProcessed, featuresCol, "label", numFeatures, numClasses)
   }
 
   def runSparkML(trainingData: DataFrame,
