@@ -336,9 +336,6 @@ object RunClassifier extends CanSpark {
       case _ => ""
     }
 
-
-    val useDL4J = args.length > 1 && args(1).toLowerCase == "dl4j"
-
     runMode match {
       case RunMode.PREPROCESS =>
         println(s"Running with runMode=${runMode.toString}, inputDataDir=$inputDataDir, and outputDataDir=$outputDataDir")
@@ -353,6 +350,5 @@ object RunClassifier extends CanSpark {
       case RunMode.DL4J => return
       case RunMode.DL4JSPARK => return
     }
-    //withSpark() { spark => runML(dataDir, useDL4J)(spark) }
   }
 }
