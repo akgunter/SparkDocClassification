@@ -102,11 +102,11 @@ object RunClassifier extends CanSpark {
 
     val getSparseIndices = udf {
       v: SparseVector =>
-        Option(v).map(_.indices.mkString(",")).orNull
+        v.indices.mkString(",")
     }
     val getSparseValues = udf {
       v: SparseVector =>
-        Option(v).map(_.values.mkString(",")).orNull
+        v.values.mkString(",")
     }
 
     val wordIndicesCol = "word_indices_string"
@@ -158,7 +158,7 @@ object RunClassifier extends CanSpark {
     val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
 
     val Array(wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
-    val featuresCol = "raw_word_vector"
+    val featuresCol = "word_vector"
     val numFeatures = dictionaryData.count.toInt
 
     logger.info("Creating data sets...")
