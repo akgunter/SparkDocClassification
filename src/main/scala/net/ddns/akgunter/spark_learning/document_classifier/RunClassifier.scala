@@ -18,6 +18,7 @@ import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
 
 import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.api.buffer.IntBuffer
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
@@ -169,7 +170,7 @@ object RunClassifier extends CanSpark {
     val trainedNet = sparkNet.fit(trainingRDD)
 
     import java.util.{ArrayList => JavaArrayList}
-    import scala.collection.JavaConverters._
+    import org.nd4j.linalg.cpu.nativecpu.NDArray
 
     val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
     val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
@@ -178,14 +179,13 @@ object RunClassifier extends CanSpark {
     //val trainingPredictions = trainedNet.predict(trainingDataSet)
 
     logger.info("Calculating validation predictions...")
-    val validationPredictions = Nd4j.create(
-      trainedNet.predict(validationDataSet.getFeatureMatrix)
-      .map(_.toDouble)
-    )
+    val validationPredictions = new NDArray(new IntBuffer(trainedNet.predict(validationDataSet.getFeatureMatrix)))
 
     val eval = new Evaluation(numClasses)
-    val realLabels = Nd4j.create(validationDataSet.getLabels.toDoubleMatrix
-      .map(_.indexOf(1.0).toDouble))
+    val realLabels = new NDArray(new IntBuffer(
+      validationDataSet.getLabels.toDoubleMatrix
+      .map(_.indexOf(1.0))
+    ))
 
     eval.eval(realLabels, validationPredictions)
     (0 until validationPredictions.length).foreach {
@@ -205,7 +205,7 @@ object RunClassifier extends CanSpark {
 
   def main(args: Array[String]): Unit = {
     val dataDir = args(0)
-    val useDL4J = args.length > 1 && args(1) == "dl4j"
+    val useDL4J = args.length > 1 && args(1).toLowerCase == "dl4j"
 
     println(s"Running with dataDir=$dataDir and useDL4J=$useDL4J")
     withSpark() { spark => runML(dataDir, useDL4J)(spark) }
