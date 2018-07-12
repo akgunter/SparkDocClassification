@@ -178,16 +178,18 @@ object RunClassifier extends CanSpark {
     //val trainingPredictions = trainedNet.predict(trainingDataSet)
 
     logger.info("Calculating validation predictions...")
+    /*
     val validationPredictions = Nd4j.create(
       trainedNet.predict(validationDataSet.getFeatureMatrix)
       .map(_.toDouble)
     )
+    */
 
     val eval = new Evaluation(numClasses)
     val realLabels = Nd4j.create(validationDataSet.getLabels.toDoubleMatrix
       .map(_.indexOf(1.0).toDouble))
 
-    eval.eval(realLabels, validationPredictions)
+    eval.eval(realLabels, validationDataSet.getFeatureMatrix, trainedNet)
     logger.info(s"${eval.getLabelsList.asScala.mkString(", ")}")
     logger.info(eval.stats())
 
