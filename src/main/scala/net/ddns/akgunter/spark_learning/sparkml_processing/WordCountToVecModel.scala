@@ -7,7 +7,7 @@ import org.apache.spark.sql.{Column, DataFrame, Dataset}
 
 
 class WordCountToVecModel protected (
-    protected val ordering: Dataset[_],
+    protected val ordering: DataFrame,
     protected val dictionarySize: Long,
     override val uid: String)
   extends Model[WordCountToVecModel]
@@ -42,6 +42,7 @@ class WordCountToVecModel protected (
 
   def getDictionarySize: Long = this.dictionarySize
 
+  def getOrdering: DataFrame = this.ordering
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     import org.apache.spark.sql.functions.col

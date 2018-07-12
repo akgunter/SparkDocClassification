@@ -31,7 +31,81 @@ import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
+
+
+object RunMode extends Enumeration {
+  val PREPROCESS, SPARKML, DL4J, DL4JSPARK = Value
+}
+
 object RunClassifier extends CanSpark {
+
+  val DEFAULT_RUN_MODE: RunMode.Value = RunMode.SPARKML
+
+  def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
+    val trainingDir = Paths.get(inputDataDir, "Training").toString
+    val validationDir = Paths.get(inputDataDir, "Validation").toString
+
+    val commonElementFilter = new CommonElementFilter()
+      .setDropFreq(0.1)
+    val wordVectorizer = new WordCountToVec()
+    val vectorSlicer = new VectorSlicer()
+      .setInputCol("raw_word_vector")
+      .setOutputCol("sliced_vector")
+      .setIndices((0 until 10).toArray)
+    val binarizer = new Binarizer()
+      .setThreshold(0.0)
+      .setInputCol("raw_word_vector")
+      //.setInputCol("sliced_vector")
+      .setOutputCol("binarized_word_vector")
+    val idf = new IDF()
+      .setInputCol("binarized_word_vector")
+      .setOutputCol("tfidf_vector")
+      .setMinDocFreq(2)
+    val chiSel = new ChiSqSelector()
+      .setFeaturesCol("tfidf_vector")
+      .setLabelCol("label")
+      .setOutputCol("chi_sel_features")
+      .setSelectorType("fdr")
+      .setFdr(0.005)
+    //.setSelectorType("fpr")
+    //.setFpr(0.00001)
+
+    val preprocPipeline = new Pipeline()
+      .setStages(Array(commonElementFilter, wordVectorizer))
+
+    logger.info("Loading data...")
+    val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
+    val validationData = dataFrameFromDirectory(validationDir, isTraining = true)
+
+    logger.info("Fitting preprocessing pipeline...")
+    val preprocModel = preprocPipeline.fit(trainingData)
+
+    logger.info("Preprocessing data...")
+    val trainingDataProcessed = preprocModel.transform(trainingData)
+    val validationDataProcessed = preprocModel.transform(validationData)
+
+    val lastStage = preprocPipeline.getStages.last
+    val featuresColParam = lastStage.getParam("outputCol")
+    val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
+
+    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
+    val numClasses = getLabelDirectories(trainingDir).length
+
+    val dictionaryFilePath = Paths.get(outputDataDir, "dictionary.csv").toString
+    logger.info(s"Columns: ${trainingDataProcessed.columns.mkString(", ")}")
+  }
+
+  def runSparkML()(implicit spark: SparkSession): Unit = {
+
+  }
+
+  def runDL4J(): Unit = {
+
+  }
+
+  def runDL4JSpark()(implicit spark: SparkSession): Unit = {
+
+  }
 
   def loadData(trainingDir: String, validationDir: String)(implicit spark: SparkSession):
   (DataFrame, DataFrame, String, String, Integer, Integer) = {
@@ -113,12 +187,12 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(trainingData: DataFrame,
-              validationData: DataFrame,
-              featuresCol: String,
-              labelCol: String,
-              numFeatures: Int,
-              numClasses: Int)(implicit spark: SparkSession): Unit = {
+  def runDL4JOld(trainingData: DataFrame,
+                 validationData: DataFrame,
+                 featuresCol: String,
+                 labelCol: String,
+                 numFeatures: Int,
+                 numClasses: Int)(implicit spark: SparkSession): Unit = {
 
     val trainingRDD = trainingData.rdd.map {
       row =>
@@ -188,15 +262,34 @@ object RunClassifier extends CanSpark {
     val validationDir = Paths.get(dataDir, "Validation").toString
     val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
 
-    if (useDL4J) runDL4J(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
+    if (useDL4J) runDL4JOld(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
     else runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
   }
 
   def main(args: Array[String]): Unit = {
-    val dataDir = args(0)
+    val runMode = RunMode.withName(args(0).toUpperCase)
+    val inputDataDir = args(1)
+    val outputDataDir = runMode match {
+      case RunMode.PREPROCESS => args(2)
+      case _ => None
+    }
+
+
     val useDL4J = args.length > 1 && args(1).toLowerCase == "dl4j"
 
-    println(s"Running with dataDir=$dataDir and useDL4J=$useDL4J")
-    withSpark() { spark => runML(dataDir, useDL4J)(spark) }
+    runMode match {
+      case RunMode.PREPROCESS =>
+        println(s"Running with runMode=${runMode.toString}, inputDataDir=$inputDataDir, and outputDataDir=$outputDataDir")
+      case _ =>
+        println(s"Running with runMode=${runMode.toString} and inputDataDir=$inputDataDir")
+    }
+
+    runMode match {
+      case RunMode.PREPROCESS => return
+      case RunMode.SPARKML => return
+      case RunMode.DL4J => return
+      case RunMode.DL4JSPARK => return
+    }
+    //withSpark() { spark => runML(dataDir, useDL4J)(spark) }
   }
 }
