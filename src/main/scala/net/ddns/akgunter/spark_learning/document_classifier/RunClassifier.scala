@@ -271,7 +271,7 @@ object RunClassifier extends CanSpark {
     val inputDataDir = args(1)
     val outputDataDir = runMode match {
       case RunMode.PREPROCESS => args(2)
-      case _ => None
+      case _ => ""
     }
 
 
@@ -285,7 +285,7 @@ object RunClassifier extends CanSpark {
     }
 
     runMode match {
-      case RunMode.PREPROCESS => return
+      case RunMode.PREPROCESS => runPreprocess(inputDataDir, outputDataDir)
       case RunMode.SPARKML => return
       case RunMode.DL4J => return
       case RunMode.DL4JSPARK => return
