@@ -17,8 +17,16 @@ import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 
 object FileUtil {
-  val labelPrefix: String = "class"
-  val labelPattern: String = s"$labelPrefix[A-Z]*"
+  val DICTIONARY_DIRNAME: String = "dictionary"
+  val TRAINING_DIRNAME: String = "training"
+  val VALIDATION_DIRNAME: String = "validation"
+  val SCHEMA_DIRNAME: String = "schema"
+
+  val LABEL_PREFIX: String = "class"
+  val LABEL_PATTERN: String = s"$LABEL_PREFIX[A-Z]*"
+
+  val SCHEMA_DATAPATH_COLUMN: String = "data_path"
+  val SCHEMA_DATASCHEMA_COLUMN: String = "data_schema"
 
   def getDataFiles(baseDirPath: String): Seq[String] = {
     new File(baseDirPath)
@@ -32,7 +40,7 @@ object FileUtil {
       .listFiles
       .filter {
         name =>
-          name.isDirectory && labelPattern.r.findFirstIn(name.getName).isDefined
+          name.isDirectory && LABEL_PATTERN.r.findFirstIn(name.getName).isDefined
       }
       .map(_.toString)
   }
@@ -51,10 +59,10 @@ object FileUtil {
   }
 
   def getLabelFromFilePath(filePath: String): String = {
-    val foundPattern = labelPattern.r.findFirstIn(filePath)
+    val foundPattern = LABEL_PATTERN.r.findFirstIn(filePath)
 
     foundPattern match {
-      case Some(v) => v.substring(labelPrefix.length)
+      case Some(v) => v.substring(LABEL_PREFIX.length)
       case None => throw new IllegalArgumentException(s"File path $filePath is unlabelled")
     }
   }
@@ -69,7 +77,7 @@ object FileUtil {
       .sum
   }
 
-  def dataFrameFromDirectory(baseDirPath: String, isTraining: Boolean)(implicit spark: SparkSession): DataFrame = {
+  def dataFrameFromRawDirectory(baseDirPath: String, isLabelled: Boolean)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     import org.apache.spark.sql.functions._
 
@@ -78,8 +86,8 @@ object FileUtil {
       .add("word_count", IntegerType)
 
     val dirPattern = {
-      if (isTraining)
-        Paths.get(baseDirPath, labelPattern + "/*.res").toString
+      if (isLabelled)
+        Paths.get(baseDirPath, LABEL_PATTERN + "/*.res").toString
       else
         Paths.get(baseDirPath, "/*.res").toString
     }
@@ -95,12 +103,32 @@ object FileUtil {
       )
       .withColumn("input_file", input_file_name)
 
-    if (isTraining) {
+    if (isLabelled) {
       val getLabelStr = udf((path: String) => getLabelFromFilePath(path))
       val getLabel = udf((labelStr: String) => labelToInt(labelStr))
       df.withColumn("label_str", getLabelStr(col("input_file")))
         .withColumn("label", getLabel(col("label_str")))
     }
     else df
+  }
+
+  def dataFrameFromProcessedDirectory(baseDirPath: String, schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
+    import spark.implicits._
+
+    val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
+    val schemaDF = spark.read.csv(schemaDirPattern)
+
+    val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == $baseDirPath")
+      .select(SCHEMA_DATAPATH_COLUMN)
+      .head
+      .getString(0)
+    val dataSchema = DataType.fromJson(dataSchemaJSON).asInstanceOf[StructType]
+
+    val baseDirPattern = Paths.get(baseDirPath, "/*.csv").toString
+
+    spark.read
+      .option("header", "false")
+      .schema(dataSchema)
+      .csv(baseDirPattern)
   }
 }

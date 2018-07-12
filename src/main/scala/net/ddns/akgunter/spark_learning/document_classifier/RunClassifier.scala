@@ -1,6 +1,5 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
-import java.io.{File, FileWriter}
 import java.nio.file.Paths
 import java.util.{ArrayList => JavaArrayList}
 
@@ -10,7 +9,7 @@ import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, udf, struct}
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -18,7 +17,6 @@ import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
-import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 
 import org.nd4j.linalg.activations.Activation
@@ -40,15 +38,9 @@ object RunMode extends Enumeration {
 }
 
 object RunClassifier extends CanSpark {
-
-  val DICTIONARY_DIR: String = "dictionary"
-  val TRAINING_DIR: String = "training"
-  val VALIDATION_DIR: String = "validation"
-  val SCHEMA_DIR: String = "schema"
-
   def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(inputDataDir, "Training").toString
-    val validationDir = Paths.get(inputDataDir, "Validation").toString
+    val trainingDir = Paths.get(inputDataDir, TRAINING_DIRNAME).toString
+    val validationDir = Paths.get(inputDataDir, VALIDATION_DIRNAME).toString
 
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
@@ -80,8 +72,8 @@ object RunClassifier extends CanSpark {
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
-    val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
-    val validationData = dataFrameFromDirectory(validationDir, isTraining = true)
+    val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
+    val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
 
     logger.info("Fitting preprocessing pipeline...")
     val preprocModel = preprocPipeline.fit(trainingData)
@@ -96,13 +88,10 @@ object RunClassifier extends CanSpark {
     val labelColParam = wordVectorizer.getParam("labelCol")
     val labelCol = wordVectorizer.getOrDefault(labelColParam).asInstanceOf[String]
 
-    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
-    val numClasses = getLabelDirectories(trainingDir).length
-
-    val dictionaryFilePath = Paths.get(outputDataDir, DICTIONARY_DIR).toString
-    val trainingDataFilePath = Paths.get(outputDataDir, TRAINING_DIR).toString
-    val validationDataFilePath = Paths.get(outputDataDir, VALIDATION_DIR).toString
-    val schemaFilePath = Paths.get(outputDataDir, SCHEMA_DIR).toString
+    val dictionaryFilePath = Paths.get(outputDataDir, DICTIONARY_DIRNAME).toString
+    val trainingDataFilePath = Paths.get(outputDataDir, TRAINING_DIRNAME).toString
+    val validationDataFilePath = Paths.get(outputDataDir, VALIDATION_DIRNAME).toString
+    val schemaFilePath = Paths.get(outputDataDir, SCHEMA_DIRNAME).toString
 
     logger.info("Writing dictionary to CSV...")
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
@@ -146,10 +135,10 @@ object RunClassifier extends CanSpark {
     logger.info("Writing schemas to CSV...")
     import spark.implicits._
     Seq(
-      dictionaryFilePath -> dictionary.columns.mkString(","),
-      trainingDataFilePath -> trainingData.columns.mkString(","),
-      validationDataFilePath -> validationData.columns.mkString(",")
-    ).toDF("file_path", "columns")
+      dictionaryFilePath -> dictionary.schema.json,
+      trainingDataFilePath -> trainingData.schema.json,
+      validationDataFilePath -> validationData.schema.json
+    ).toDF(SCHEMA_DATAPATH_COLUMN, SCHEMA_DATASCHEMA_COLUMN)
       .coalesce(1)
       .write
       .mode("overwrite")
@@ -157,8 +146,53 @@ object RunClassifier extends CanSpark {
       .csv(schemaFilePath)
   }
 
-  def runSparkML()(implicit spark: SparkSession): Unit = {
+  def runSparkML(inputDataDir: String)(implicit spark: SparkSession): Unit = {
+    val schemaDir = Paths.get(inputDataDir, SCHEMA_DIRNAME).toString
+    val dictionaryDir = Paths.get(inputDataDir, DICTIONARY_DIRNAME).toString
+    val trainingDir = Paths.get(inputDataDir, TRAINING_DIRNAME).toString
+    val validationDir = Paths.get(inputDataDir, VALIDATION_DIRNAME).toString
 
+    val dictionaryData = dataFrameFromProcessedDirectory(dictionaryDir, schemaDir)
+    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir, schemaDir)
+    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
+
+    val Array(wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
+    val featuresCol = "raw_word_vector"
+    val numFeatures = dictionaryData.count.toInt
+    val numClasses = getLabelDirectories(trainingDir).length
+
+    val createSparseColumn = udf {
+      (wordIndices: Array[Int], wordCounts: Array[Double]) =>
+        new SparseVector(numFeatures, wordIndices, wordCounts)
+    }
+    val trainingData = trainingDataProcessed.select(
+      createSparseColumn(col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      col(labelCol)
+    )
+    val validationData = validationDataProcessed.select(
+      createSparseColumn(col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      col(labelCol)
+    )
+
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val mlpc = new MultilayerPerceptronClassifier()
+      .setLayers(Array(numFeatures, numClasses))
+      .setMaxIter(100)
+      //.setBlockSize(20)
+      .setFeaturesCol(featuresCol)
+
+    logger.info("Training neural network...")
+    val mlpcModel = mlpc.fit(trainingData)
+
+    logger.info("Calculating predictions...")
+    val trainingPredictions = mlpcModel.transform(trainingData)
+    val validationPredictions = mlpcModel.transform(validationData)
+
+    val evaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("accuracy")
+
+    logger.info(s"Training accuracy: ${evaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
   def runDL4J(): Unit = {
@@ -201,8 +235,8 @@ object RunClassifier extends CanSpark {
       .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
-    val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
-    val validationData = dataFrameFromDirectory(validationDir, isTraining = true)
+    val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
+    val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
 
     logger.info("Fitting preprocessing pipeline...")
     val preprocModel = preprocPipeline.fit(trainingData)
