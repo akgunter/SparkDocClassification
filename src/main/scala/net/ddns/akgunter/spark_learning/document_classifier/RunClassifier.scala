@@ -105,16 +105,19 @@ object RunClassifier extends CanSpark {
 
     val getSparseIndices = udf {
       v: SparseVector =>
-        Option(v).map(_.indices).orNull
+        Option(v).map(_.indices.mkString(",")).orNull
     }
     val getSparseValues = udf {
       v: SparseVector =>
-        Option(v).map(_.values).orNull
+        Option(v).map(_.values.mkString(",")).orNull
     }
 
+    val wordIndicesCol = "word_indices_array"
+    val wordCountsCol = "word_counts_array"
+
     trainingDataProcessed.select(
-        getSparseIndices(col(featuresCol)) as "indices",
-        getSparseValues(col(featuresCol)) as "values",
+        getSparseIndices(col(featuresCol)) as wordIndicesCol,
+        getSparseValues(col(featuresCol)) as wordCountsCol,
         col(labelCol)
       )
       .write
@@ -124,8 +127,8 @@ object RunClassifier extends CanSpark {
       .save(trainingDataFilePath)
 
     validationDataProcessed.select(
-      getSparseIndices(col(featuresCol)) as "indices",
-      getSparseValues(col(featuresCol)) as "values",
+      getSparseIndices(col(featuresCol)) as wordIndicesCol,
+      getSparseValues(col(featuresCol)) as wordCountsCol,
       col(labelCol)
     )
     .write
