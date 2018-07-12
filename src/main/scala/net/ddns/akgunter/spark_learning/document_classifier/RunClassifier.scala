@@ -152,6 +152,7 @@ object RunClassifier extends CanSpark {
     val trainingDir = Paths.get(inputDataDir, TRAINING_DIRNAME).toString
     val validationDir = Paths.get(inputDataDir, VALIDATION_DIRNAME).toString
 
+    logger.info("Loading data files...")
     val dictionaryData = dataFrameFromProcessedDirectory(dictionaryDir, schemaDir)
     val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir, schemaDir)
     val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
@@ -159,8 +160,8 @@ object RunClassifier extends CanSpark {
     val Array(wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
     val featuresCol = "raw_word_vector"
     val numFeatures = dictionaryData.count.toInt
-    val numClasses = getLabelDirectories(trainingDir).length
 
+    logger.info("Creating data sets...")
     val createSparseColumn = udf {
       (wordIndicesStr: String, wordCountsStr: String) =>
         val wordIndices = wordIndicesStr.split(",").map(_.toInt)
@@ -175,6 +176,8 @@ object RunClassifier extends CanSpark {
       createSparseColumn(col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
       col(labelCol)
     )
+
+    val numClasses = trainingData.select(labelCol).distinct.count.toInt
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val mlpc = new MultilayerPerceptronClassifier()
