@@ -113,22 +113,22 @@ object RunClassifier extends CanSpark {
     val wordCountsCol = "word_counts_array"
 
     logger.info("Writing training data to CSV...")
-    trainingDataProcessed.select(
-        getSparseIndices(col(featuresCol)) as wordIndicesCol,
-        getSparseValues(col(featuresCol)) as wordCountsCol,
-        col(labelCol)
-      )
-      .write
-      .mode("overwrite")
-      .csv(trainingDataFilePath)
-
-    logger.info("Writing validation data to CSV...")
-    validationDataProcessed.select(
+    val trainingDataToWrite = trainingDataProcessed.select(
       getSparseIndices(col(featuresCol)) as wordIndicesCol,
       getSparseValues(col(featuresCol)) as wordCountsCol,
       col(labelCol)
     )
-    .write
+    trainingDataToWrite.write
+      .mode("overwrite")
+      .csv(trainingDataFilePath)
+
+    logger.info("Writing validation data to CSV...")
+    val validationDataToWrite = validationDataProcessed.select(
+      getSparseIndices(col(featuresCol)) as wordIndicesCol,
+      getSparseValues(col(featuresCol)) as wordCountsCol,
+      col(labelCol)
+    )
+    validationDataToWrite.write
     .mode("overwrite")
     .csv(validationDataFilePath)
 
@@ -136,8 +136,8 @@ object RunClassifier extends CanSpark {
     import spark.implicits._
     Seq(
       dictionaryFilePath -> dictionary.schema.json,
-      trainingDataFilePath -> trainingData.schema.json,
-      validationDataFilePath -> validationData.schema.json
+      trainingDataFilePath -> trainingDataToWrite.schema.json,
+      validationDataFilePath -> validationDataToWrite.schema.json
     ).toDF(SCHEMA_DATAPATH_COLUMN, SCHEMA_DATASCHEMA_COLUMN)
       .coalesce(1)
       .write
