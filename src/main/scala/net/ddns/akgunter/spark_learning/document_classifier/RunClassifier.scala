@@ -380,7 +380,8 @@ object RunClassifier extends CanSpark {
     runMode match {
       case RunMode.PREPROCESS =>
         withSpark() { spark => runPreprocess(inputDataDir, outputDataDir)(spark) }
-      case RunMode.SPARKML => return
+      case RunMode.SPARKML =>
+        withSpark() { spark => runSparkML(inputDataDir)(spark) }
       case RunMode.DL4J => return
       case RunMode.DL4JSPARK => return
     }
