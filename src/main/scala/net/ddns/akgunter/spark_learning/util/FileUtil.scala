@@ -127,11 +127,9 @@ object FileUtil {
     val schemaDF = getDataFrameSchemas(schemaDirPath)
 
     val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
-      .select(SCHEMA_DATAPATH_COLUMN)
-      .collect
+      .select(SCHEMA_DATASCHEMA_COLUMN)
       .head
       .getString(0)
-    println(dataSchemaJSON)
     val dataSchema = DataType.fromJson(dataSchemaJSON).asInstanceOf[StructType]
 
     val baseDirPattern = Paths.get(baseDirPath, "/*.csv").toString
