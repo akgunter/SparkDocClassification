@@ -115,8 +115,14 @@ object FileUtil {
   def dataFrameFromProcessedDirectory(baseDirPath: String, schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
+    val schemaForSchemaDF = new StructType()
+      .add(SCHEMA_DATAPATH_COLUMN, StringType)
+      .add(SCHEMA_DATASCHEMA_COLUMN, StringType)
+
     val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
-    val schemaDF = spark.read.csv(schemaDirPattern)
+    val schemaDF = spark.read
+      .option("header", "true")
+      .csv(schemaDirPattern)
 
     val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
       .select(SCHEMA_DATAPATH_COLUMN)
