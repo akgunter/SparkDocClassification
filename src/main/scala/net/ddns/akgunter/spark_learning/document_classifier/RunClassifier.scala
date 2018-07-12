@@ -285,7 +285,8 @@ object RunClassifier extends CanSpark {
     }
 
     runMode match {
-      case RunMode.PREPROCESS => runPreprocess(inputDataDir, outputDataDir)
+      case RunMode.PREPROCESS =>
+        withSpark() { spark => runPreprocess(inputDataDir, outputDataDir)(spark) }
       case RunMode.SPARKML => return
       case RunMode.DL4J => return
       case RunMode.DL4JSPARK => return
