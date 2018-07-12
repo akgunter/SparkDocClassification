@@ -112,17 +112,19 @@ object FileUtil {
     else df
   }
 
-  def dataFrameFromProcessedDirectory(baseDirPath: String, schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
+  protected def getDataFrameSchemas(schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
     val schemaForSchemaDF = new StructType()
       .add(SCHEMA_DATAPATH_COLUMN, StringType)
       .add(SCHEMA_DATASCHEMA_COLUMN, StringType)
 
     val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
-    val schemaDF = spark.read
+    spark.read
       .option("header", "true")
       .csv(schemaDirPattern)
+  }
+
+  def dataFrameFromProcessedDirectory(baseDirPath: String, schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
+    val schemaDF = getDataFrameSchemas(schemaDirPath)
 
     val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
       .select(SCHEMA_DATAPATH_COLUMN)
@@ -136,5 +138,20 @@ object FileUtil {
       .option("header", "false")
       .schema(dataSchema)
       .csv(baseDirPattern)
+  }
+
+  def writeProcessedDataFrame(dataFrame: DataFrame, dirPath: String, schemaDirPath: String): Unit = {
+    val spark = dataFrame.sparkSession
+
+    val schemaForSchemaDF = new StructType()
+      .add(SCHEMA_DATAPATH_COLUMN, StringType)
+      .add(SCHEMA_DATASCHEMA_COLUMN, StringType)
+
+    val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
+    val schemaDF = spark.read
+      .option("header", "true")
+      .csv(schemaDirPattern)
+
+
   }
 }
