@@ -117,14 +117,20 @@ object RunClassifier extends CanSpark {
         getSparseValues(col(featuresCol)) as "values",
         col(labelCol)
       )
-      .write.csv(trainingDataFilePath)
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .csv(trainingDataFilePath)
 
     validationDataProcessed.select(
       getSparseIndices(col(featuresCol)) as "indices",
       getSparseValues(col(featuresCol)) as "values",
       col(labelCol)
     )
-    .write.csv(validationDataFilePath)
+    .write
+    .mode("overwrite")
+    .option("header", "true")
+    .csv(validationDataFilePath)
   }
 
   def runSparkML()(implicit spark: SparkSession): Unit = {
