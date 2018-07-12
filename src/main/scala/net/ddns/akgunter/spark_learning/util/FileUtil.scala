@@ -128,6 +128,7 @@ object FileUtil {
 
     val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
       .select(SCHEMA_DATAPATH_COLUMN)
+      .collect
       .head
       .getString(0)
     println(dataSchemaJSON)
