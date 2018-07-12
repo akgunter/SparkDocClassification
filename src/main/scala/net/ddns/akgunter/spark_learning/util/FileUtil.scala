@@ -17,10 +17,10 @@ import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 
 object FileUtil {
-  val DICTIONARY_DIRNAME: String = "dictionary"
-  val TRAINING_DIRNAME: String = "training"
-  val VALIDATION_DIRNAME: String = "validation"
-  val SCHEMA_DIRNAME: String = "schema"
+  val DICTIONARY_DIRNAME: String = "Dictionary"
+  val TRAINING_DIRNAME: String = "Training"
+  val VALIDATION_DIRNAME: String = "Validation"
+  val SCHEMA_DIRNAME: String = "Schema"
 
   val LABEL_PREFIX: String = "class"
   val LABEL_PATTERN: String = s"$LABEL_PREFIX[A-Z]*"
