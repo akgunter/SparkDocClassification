@@ -71,7 +71,7 @@ object RunClassifier extends CanSpark {
     //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer))
+      .setStages(Array(commonElementFilter, wordVectorizer, binarizer))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
