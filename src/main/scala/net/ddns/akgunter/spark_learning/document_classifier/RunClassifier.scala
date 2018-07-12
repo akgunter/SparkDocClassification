@@ -65,12 +65,13 @@ object RunClassifier extends CanSpark {
       .setFeaturesCol("tfidf_vector")
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
-      .setSelectorType("fdr")
-      .setFdr(0.005)
-    //.setSelectorType("fpr")
-    //.setFpr(0.00001)
+      .setNumTopFeatures(8000)
+      //.setSelectorType("fdr")
+      //.setFdr(0.005)
+      //.setSelectorType("fpr")
+      //.setFpr(0.00001)
 
-    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer)
+    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
