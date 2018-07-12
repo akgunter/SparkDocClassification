@@ -93,9 +93,9 @@ object RunClassifier extends CanSpark {
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
     val numClasses = getLabelDirectories(trainingDir).length
 
-    val dictionaryFilePath = Paths.get(outputDataDir, "dictionary.csv").toString
-    val trainingDataFilePath = Paths.get(outputDataDir, "training.csv").toString
-    val validationDataFilePath = Paths.get(outputDataDir, "validation.csv").toString
+    val dictionaryFilePath = Paths.get(outputDataDir, "dictionary_data").toString
+    val trainingDataFilePath = Paths.get(outputDataDir, "training_data").toString
+    val validationDataFilePath = Paths.get(outputDataDir, "validation_data").toString
 
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
     val dictionary = wordVectorizerModel.getDictionary
@@ -118,9 +118,10 @@ object RunClassifier extends CanSpark {
         col(labelCol)
       )
       .write
+      .format("com.databricks.spark.csv")
       .mode("overwrite")
       .option("header", "true")
-      .csv(trainingDataFilePath)
+      .save(trainingDataFilePath)
 
     validationDataProcessed.select(
       getSparseIndices(col(featuresCol)) as "indices",
@@ -128,9 +129,10 @@ object RunClassifier extends CanSpark {
       col(labelCol)
     )
     .write
+    .format("com.databricks.spark.csv")
     .mode("overwrite")
     .option("header", "true")
-    .csv(validationDataFilePath)
+    .save(validationDataFilePath)
   }
 
   def runSparkML()(implicit spark: SparkSession): Unit = {
