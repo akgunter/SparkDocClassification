@@ -1,6 +1,7 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
+import java.util.{ArrayList => JavaArrayList}
 
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -168,38 +169,17 @@ object RunClassifier extends CanSpark {
     logger.info("Training neural network...")
     val trainedNet = sparkNet.fit(trainingRDD)
 
-    import java.util.{ArrayList => JavaArrayList}
-    import scala.collection.JavaConverters._
-
     val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
     val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
 
-    //logger.info("Calculating training predictions...")
-    //val trainingPredictions = trainedNet.predict(trainingDataSet)
-
-    logger.info("Calculating validation predictions...")
-    /*
-    val validationPredictions = Nd4j.create(
-      trainedNet.predict(validationDataSet.getFeatureMatrix)
-      .map(_.toDouble)
-    )
-    */
-
+    logger.info("Evaluating training performance...")
     val eval = new Evaluation(numClasses)
-    //val realLabels = Nd4j.create(validationDataSet.getLabels.toDoubleMatrix
-    //  .map(_.indexOf(1.0).toDouble))
-    val realLabels =
-
-    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, trainedNet)
-    logger.info(s"${eval.getLabelsList.asScala.mkString(", ")}")
+    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, trainedNet)
     logger.info(eval.stats())
 
-    /*
-    (0 until validationPredictions.length).foreach {
-      idx =>
-        logger.info(s"Correct: ${realLabels.getDouble(idx)}, Predicted: ${validationPredictions.getDouble(idx)}")
-    }
-    */
+    logger.info("Evaluating validation performance...")
+    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, trainedNet)
+    logger.info(eval.stats())
   }
 
   def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
