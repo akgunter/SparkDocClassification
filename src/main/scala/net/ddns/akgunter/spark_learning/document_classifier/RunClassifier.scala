@@ -99,7 +99,11 @@ object RunClassifier extends CanSpark {
 
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
     val dictionary = wordVectorizerModel.getDictionary
-    dictionary.write.csv(dictionaryFilePath)
+    dictionary.write
+      .format("com.databricks.spark.csv")
+      .mode("overwrite")
+      .option("header", "true")
+      .save(dictionaryFilePath)
 
     import org.apache.spark.sql.functions.{col, udf}
 
