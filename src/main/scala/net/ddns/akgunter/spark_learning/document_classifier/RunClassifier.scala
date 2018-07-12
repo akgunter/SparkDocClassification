@@ -17,6 +17,7 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.parameterserver.training.SharedTrainingMaster
+import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
@@ -156,17 +157,24 @@ object RunClassifier extends CanSpark {
       .unicastPort(4050)
       .networkMask("10.0.0.0/24")
       .controllerAddress("127.0.0.1")
-      .executionMode(ExecutionMode.MANAGED)
+      .executionMode(ExecutionMode.AVERAGING)
       .build
 
-    val tm = new SharedTrainingMaster.Builder(voidConfig, 1)
+    val trainingMaster = new ParameterAveragingTrainingMaster.Builder(1)
+      .rddTrainingApproach(RDDTrainingApproach.Export)
+      .exportDirectory("/tmp/alex-spark/SparkLearning")
+      .build
+
+    /*
+    val trainingMaster = new SharedTrainingMaster.Builder(voidConfig, 1)
       .updatesThreshold(1e-3)
       .rddTrainingApproach(RDDTrainingApproach.Direct)
       .batchSizePerWorker(1)
       .workersPerNode(4)
       .build
+    */
 
-    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, tm)
+    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, trainingMaster)
 
     logger.info("Training neural network...")
     val trainedNet = sparkNet.fit(trainingRDD)
