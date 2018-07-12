@@ -41,11 +41,12 @@ object RunMode extends Enumeration {
 
 object RunClassifier extends CanSpark {
 
-  val DEFAULT_RUN_MODE: RunMode.Value = RunMode.SPARKML
+  val DICTIONARY_DIR: String = "dictionary"
+  val TRAINING_DIR: String = "training"
+  val VALIDATION_DIR: String = "validation"
+  val SCHEMA_DIR: String = "schema"
 
   def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
-
-
     val trainingDir = Paths.get(inputDataDir, "Training").toString
     val validationDir = Paths.get(inputDataDir, "Validation").toString
 
@@ -75,7 +76,7 @@ object RunClassifier extends CanSpark {
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
-    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer)
+    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
@@ -98,10 +99,10 @@ object RunClassifier extends CanSpark {
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
     val numClasses = getLabelDirectories(trainingDir).length
 
-    val dictionaryFilePath = Paths.get(outputDataDir, "dictionary_data").toString
-    val trainingDataFilePath = Paths.get(outputDataDir, "training_data").toString
-    val validationDataFilePath = Paths.get(outputDataDir, "validation_data").toString
-    val schemaFilePath = Paths.get(outputDataDir, "schema.csv").toString
+    val dictionaryFilePath = Paths.get(outputDataDir, DICTIONARY_DIR).toString
+    val trainingDataFilePath = Paths.get(outputDataDir, TRAINING_DIR).toString
+    val validationDataFilePath = Paths.get(outputDataDir, VALIDATION_DIR).toString
+    val schemaFilePath = Paths.get(outputDataDir, SCHEMA_DIR).toString
 
     logger.info("Writing dictionary to CSV...")
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
