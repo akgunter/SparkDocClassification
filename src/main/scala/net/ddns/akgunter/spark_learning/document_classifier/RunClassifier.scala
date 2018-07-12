@@ -75,7 +75,7 @@ object RunClassifier extends CanSpark {
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
-    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
+    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
