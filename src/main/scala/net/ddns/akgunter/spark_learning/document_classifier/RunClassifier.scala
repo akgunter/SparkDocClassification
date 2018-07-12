@@ -1,5 +1,6 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
+import java.io.{File, FileWriter}
 import java.nio.file.Paths
 import java.util.{ArrayList => JavaArrayList}
 
@@ -9,6 +10,7 @@ import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{col, udf}
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -42,6 +44,8 @@ object RunClassifier extends CanSpark {
   val DEFAULT_RUN_MODE: RunMode.Value = RunMode.SPARKML
 
   def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
+
+
     val trainingDir = Paths.get(inputDataDir, "Training").toString
     val validationDir = Paths.get(inputDataDir, "Validation").toString
 
@@ -97,15 +101,14 @@ object RunClassifier extends CanSpark {
     val dictionaryFilePath = Paths.get(outputDataDir, "dictionary_data").toString
     val trainingDataFilePath = Paths.get(outputDataDir, "training_data").toString
     val validationDataFilePath = Paths.get(outputDataDir, "validation_data").toString
+    val schemaFilePath = Paths.get(outputDataDir, "schema.csv").toString
 
+    logger.info("Writing dictionary to CSV...")
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
     val dictionary = wordVectorizerModel.getDictionary
     dictionary.write
       .mode("overwrite")
-      .option("header", "true")
       .csv(dictionaryFilePath)
-
-    import org.apache.spark.sql.functions.{col, udf}
 
     val getSparseIndices = udf {
       v: SparseVector =>
@@ -119,6 +122,7 @@ object RunClassifier extends CanSpark {
     val wordIndicesCol = "word_indices_array"
     val wordCountsCol = "word_counts_array"
 
+    logger.info("Writing training data to CSV...")
     trainingDataProcessed.select(
         getSparseIndices(col(featuresCol)) as wordIndicesCol,
         getSparseValues(col(featuresCol)) as wordCountsCol,
@@ -126,9 +130,9 @@ object RunClassifier extends CanSpark {
       )
       .write
       .mode("overwrite")
-      .option("header", "true")
       .csv(trainingDataFilePath)
 
+    logger.info("Writing validation data to CSV...")
     validationDataProcessed.select(
       getSparseIndices(col(featuresCol)) as wordIndicesCol,
       getSparseValues(col(featuresCol)) as wordCountsCol,
@@ -136,8 +140,19 @@ object RunClassifier extends CanSpark {
     )
     .write
     .mode("overwrite")
-    .option("header", "true")
     .csv(validationDataFilePath)
+
+    logger.info("Writing schemas to CSV...")
+    import spark.implicits._
+    Seq(
+      dictionaryFilePath -> dictionary.columns.mkString(","),
+      trainingDataFilePath -> trainingData.columns.mkString(","),
+      validationDataFilePath -> validationData.columns.mkString(",")
+    ).toDF("file_path", "columns")
+      .write
+      .mode("overwrite")
+      .option("header", "true")
+      .csv(schemaFilePath)
   }
 
   def runSparkML()(implicit spark: SparkSession): Unit = {
