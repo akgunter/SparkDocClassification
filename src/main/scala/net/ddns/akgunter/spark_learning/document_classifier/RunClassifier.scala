@@ -87,7 +87,8 @@ object RunClassifier extends CanSpark {
     val lastStage = preprocPipeline.getStages.last
     val featuresColParam = lastStage.getParam("outputCol")
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
-    val labelCol = wordVectorizer.getParam("labelCol").name
+    val labelColParam = wordVectorizer.getParam("labelCol")
+    val labelCol = wordVectorizer.getOrDefault(labelColParam).asInstanceOf[String]
 
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
     val numClasses = getLabelDirectories(trainingDir).length
