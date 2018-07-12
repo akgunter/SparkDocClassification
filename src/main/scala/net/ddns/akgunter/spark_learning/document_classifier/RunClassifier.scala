@@ -81,9 +81,7 @@ object RunClassifier extends CanSpark {
     logger.info("Preprocessing data...")
     val trainingDataProcessed = preprocModel.transform(trainingData)
     val validationDataProcessed = preprocModel.transform(validationData)
-
-    trainingDataProcessed.show(10, truncate = false)
-
+    
     val lastStage = preprocPipeline.getStages.last
     val featuresColParam = lastStage.getParam("outputCol")
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
@@ -166,8 +164,12 @@ object RunClassifier extends CanSpark {
     logger.info("Creating data sets...")
     val createSparseColumn = udf {
       (wordIndicesStr: String, wordCountsStr: String) =>
-        val wordIndices = wordIndicesStr.split(",").map(_.toInt)
-        val wordCounts = wordCountsStr.split(",").map(_.toDouble)
+        val wordIndices = Option(wordIndicesStr)
+          .map(_.split(",").map(_.toInt))
+          .getOrElse(Array.empty[Int])
+        val wordCounts = Option(wordCountsStr)
+          .map(_.split(",").map(_.toDouble))
+          .getOrElse(Array.empty[Double])
         new SparseVector(numFeatures, wordIndices, wordCounts)
     }
     val trainingData = trainingDataProcessed.select(
