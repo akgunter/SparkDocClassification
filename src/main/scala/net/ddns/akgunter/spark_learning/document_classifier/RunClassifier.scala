@@ -149,6 +149,7 @@ object RunClassifier extends CanSpark {
       trainingDataFilePath -> trainingData.columns.mkString(","),
       validationDataFilePath -> validationData.columns.mkString(",")
     ).toDF("file_path", "columns")
+      .coalesce(1)
       .write
       .mode("overwrite")
       .option("header", "true")
