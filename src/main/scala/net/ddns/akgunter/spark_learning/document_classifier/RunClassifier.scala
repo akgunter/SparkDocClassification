@@ -109,8 +109,8 @@ object RunClassifier extends CanSpark {
         Option(v).map(_.values.mkString(",")).orNull
     }
 
-    val wordIndicesCol = "word_indices_array"
-    val wordCountsCol = "word_counts_array"
+    val wordIndicesCol = "word_indices_string"
+    val wordCountsCol = "word_counts_string"
 
     logger.info("Writing training data to CSV...")
     val trainingDataToWrite = trainingDataProcessed.select(
@@ -156,14 +156,15 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir, schemaDir)
     val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
 
-    logger.info(s"TEST: ${trainingDataProcessed.columns.mkString(", ")}")
     val Array(wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
     val featuresCol = "raw_word_vector"
     val numFeatures = dictionaryData.count.toInt
     val numClasses = getLabelDirectories(trainingDir).length
 
     val createSparseColumn = udf {
-      (wordIndices: Array[Int], wordCounts: Array[Double]) =>
+      (wordIndicesStr: String, wordCountsStr: String) =>
+        val wordIndices = wordIndicesStr.split(",").map(_.toInt)
+        val wordCounts = wordCountsStr.split(",").map(_.toDouble)
         new SparseVector(numFeatures, wordIndices, wordCounts)
     }
     val trainingData = trainingDataProcessed.select(
