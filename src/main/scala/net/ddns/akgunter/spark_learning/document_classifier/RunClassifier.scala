@@ -82,6 +82,8 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = preprocModel.transform(trainingData)
     val validationDataProcessed = preprocModel.transform(validationData)
 
+    trainingDataProcessed.show(10, truncate = false)
+
     val lastStage = preprocPipeline.getStages.last
     val featuresColParam = lastStage.getParam("outputCol")
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
