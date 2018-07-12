@@ -45,8 +45,8 @@ object RunClassifier extends CanSpark {
       .setIndices((0 until 10).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
-      //.setInputCol("raw_word_vector")
-      .setInputCol("sliced_vector")
+      .setInputCol("raw_word_vector")
+      //.setInputCol("sliced_vector")
       .setOutputCol("binarized_word_vector")
     val idf = new IDF()
       .setInputCol("binarized_word_vector")
@@ -62,7 +62,7 @@ object RunClassifier extends CanSpark {
       //.setFpr(0.00001)
 
     val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, vectorSlicer))
+      .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
@@ -164,15 +164,6 @@ object RunClassifier extends CanSpark {
       .rddTrainingApproach(RDDTrainingApproach.Export)
       .exportDirectory("/tmp/alex-spark/SparkLearning")
       .build
-
-    /*
-    val trainingMaster = new SharedTrainingMaster.Builder(voidConfig, 1)
-      .updatesThreshold(1e-3)
-      .rddTrainingApproach(RDDTrainingApproach.Direct)
-      .batchSizePerWorker(1)
-      .workersPerNode(4)
-      .build
-    */
 
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, trainingMaster)
 
