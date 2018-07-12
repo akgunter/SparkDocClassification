@@ -7,9 +7,9 @@ import org.apache.spark.sql.{Column, DataFrame, Dataset}
 
 
 class WordCountToVecModel protected (
-    protected val ordering: DataFrame,
-    protected val dictionarySize: Long,
-    override val uid: String)
+                                      protected val dictionary: DataFrame,
+                                      protected val dictionarySize: Long,
+                                      override val uid: String)
   extends Model[WordCountToVecModel]
     with WordVectorPipelineStage {
 
@@ -22,8 +22,8 @@ class WordCountToVecModel protected (
     vectorCol
   )
 
-  protected[sparkml_processing] def this(ordering: DataFrame, maxIndex: Long) = {
-    this(ordering, maxIndex, Identifiable.randomUID("WordCountToVecModel"))
+  protected[sparkml_processing] def this(dictionary: DataFrame, maxIndex: Long) = {
+    this(dictionary, maxIndex, Identifiable.randomUID("WordCountToVecModel"))
   }
 
   def setFileCol(value: String): WordCountToVecModel = set(fileCol, value)
@@ -42,7 +42,7 @@ class WordCountToVecModel protected (
 
   def getDictionarySize: Long = this.dictionarySize
 
-  def getOrdering: DataFrame = this.ordering
+  def getDictionary: DataFrame = this.dictionary
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     import org.apache.spark.sql.functions.col
@@ -58,7 +58,7 @@ class WordCountToVecModel protected (
       .setCountCol($(wordCountCol))
       .setIndexCol($(indexCol))
 
-    dataset.join(ordering, $(wordCol))
+    dataset.join(dictionary, $(wordCol))
       .groupBy(groupByColumns: _*)
       .agg(fileRowVectorizer(col($(indexCol)), col($(wordCountCol))) as $(vectorCol))
   }

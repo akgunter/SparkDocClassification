@@ -28,7 +28,7 @@ import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
 import org.nd4j.parameterserver.distributed.enums.ExecutionMode
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
-import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
+import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec, WordCountToVecModel}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 
@@ -70,8 +70,8 @@ object RunClassifier extends CanSpark {
     //.setSelectorType("fpr")
     //.setFpr(0.00001)
 
-    val preprocPipeline = new Pipeline()
-      .setStages(Array(commonElementFilter, wordVectorizer, binarizer))
+    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer)
+    val preprocPipeline = new Pipeline().setStages(preprocStages)
 
     logger.info("Loading data...")
     val trainingData = dataFrameFromDirectory(trainingDir, isTraining = true)
@@ -87,12 +87,43 @@ object RunClassifier extends CanSpark {
     val lastStage = preprocPipeline.getStages.last
     val featuresColParam = lastStage.getParam("outputCol")
     val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
+    val labelCol = wordVectorizer.getParam("labelCol").name
 
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
     val numClasses = getLabelDirectories(trainingDir).length
 
     val dictionaryFilePath = Paths.get(outputDataDir, "dictionary.csv").toString
-    logger.info(s"Columns: ${trainingDataProcessed.columns.mkString(", ")}")
+    val trainingDataFilePath = Paths.get(outputDataDir, "training.csv").toString
+    val validationDataFilePath = Paths.get(outputDataDir, "validation.csv").toString
+
+    val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
+    val dictionary = wordVectorizerModel.getDictionary
+    dictionary.write.csv(dictionaryFilePath)
+
+    import org.apache.spark.sql.functions.{col, udf}
+
+    val getSparseIndices = udf {
+      v: SparseVector =>
+        Option(v).map(_.indices).orNull
+    }
+    val getSparseValues = udf {
+      v: SparseVector =>
+        Option(v).map(_.values).orNull
+    }
+
+    trainingDataProcessed.select(
+        getSparseIndices(col(featuresCol)) as "indices",
+        getSparseValues(col(featuresCol)) as "values",
+        col(labelCol)
+      )
+      .write.csv(trainingDataFilePath)
+
+    validationDataProcessed.select(
+      getSparseIndices(col(featuresCol)) as "indices",
+      getSparseValues(col(featuresCol)) as "values",
+      col(labelCol)
+    )
+    .write.csv(validationDataFilePath)
   }
 
   def runSparkML()(implicit spark: SparkSession): Unit = {

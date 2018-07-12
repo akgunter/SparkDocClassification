@@ -35,7 +35,7 @@ class WordCountToVec(override val uid: String)
 
   override def copy(extra: ParamMap): Estimator[WordCountToVecModel] = defaultCopy(extra)
 
-  protected def getVocabOrdering(dataset: Dataset[_]): DataFrame = {
+  protected def buildDictionary(dataset: Dataset[_]): DataFrame = {
     val wordSet = dataset.select($(wordCol))
 
     dataset.sparkSession.createDataFrame(
@@ -53,12 +53,12 @@ class WordCountToVec(override val uid: String)
   override def fit(dataset: Dataset[_]): WordCountToVecModel = {
     import org.apache.spark.sql.functions.max
 
-    val ordering = getVocabOrdering(dataset)
-    val maxIndex = ordering.agg(max($(indexCol)))
+    val dictionary = buildDictionary(dataset)
+    val maxIndex = dictionary.agg(max($(indexCol)))
       .head()
       .getLong(0)
 
-    new WordCountToVecModel(ordering, maxIndex + 1)
+    new WordCountToVecModel(dictionary, maxIndex + 1)
       .setParent(this)
       .setCountCol($(wordCountCol))
       .setFileCol($(fileCol))
