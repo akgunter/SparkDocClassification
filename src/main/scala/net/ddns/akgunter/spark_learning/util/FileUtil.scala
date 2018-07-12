@@ -118,7 +118,7 @@ object FileUtil {
     val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
     val schemaDF = spark.read.csv(schemaDirPattern)
 
-    val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == $baseDirPath")
+    val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
       .select(SCHEMA_DATAPATH_COLUMN)
       .head
       .getString(0)
