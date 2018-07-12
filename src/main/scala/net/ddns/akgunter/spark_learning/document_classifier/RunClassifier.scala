@@ -24,6 +24,7 @@ import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
+import org.nd4j.parameterserver.distributed.enums.ExecutionMode
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
@@ -155,6 +156,7 @@ object RunClassifier extends CanSpark {
       .unicastPort(4050)
       .networkMask("10.0.0.0/24")
       .controllerAddress("127.0.0.1")
+      .executionMode(ExecutionMode.MANAGED)
       .build
 
     val tm = new SharedTrainingMaster.Builder(voidConfig, 1)
