@@ -32,27 +32,28 @@ import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter,
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 
-
 object RunMode extends Enumeration {
   val PREPROCESS, SPARKML, DL4J, DL4JSPARK = Value
 }
 
 object RunClassifier extends CanSpark {
   def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(inputDataDir, TRAINING_DIRNAME).toString
-    val validationDir = Paths.get(inputDataDir, VALIDATION_DIRNAME).toString
+    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
+
+    val rawWordVectorColParam = wordVectorizer.getParam("vectorCol")
+    val rawWordVectorCol = wordVectorizer.getOrDefault(rawWordVectorColParam).asInstanceOf[String]
     val vectorSlicer = new VectorSlicer()
-      .setInputCol("raw_word_vector")
+      .setInputCol(rawWordVectorCol)
       .setOutputCol("sliced_vector")
       .setIndices((0 until 10).toArray)
     val binarizer = new Binarizer()
       .setThreshold(0.0)
       .setInputCol("raw_word_vector")
-      //.setInputCol("sliced_vector")
       .setOutputCol("binarized_word_vector")
     val idf = new IDF()
       .setInputCol("binarized_word_vector")
@@ -71,28 +72,33 @@ object RunClassifier extends CanSpark {
     val preprocStages = Array(commonElementFilter, wordVectorizer, vectorSlicer)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
+
     logger.info("Loading data...")
     val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
     val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
 
+
     logger.info("Fitting preprocessing pipeline...")
     val preprocModel = preprocPipeline.fit(trainingData)
+
 
     logger.info("Preprocessing data...")
     val trainingDataProcessed = preprocModel.transform(trainingData)
     val validationDataProcessed = preprocModel.transform(validationData)
 
-    val lastStage = preprocPipeline.getStages.last
-    val featuresColParam = lastStage.getParam("outputCol")
-    val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
-    val labelColParam = wordVectorizer.getParam("labelCol")
-    val labelCol = wordVectorizer.getOrDefault(labelColParam).asInstanceOf[String]
-    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
 
-    val dictionaryFilePath = Paths.get(outputDataDir, DICTIONARY_DIRNAME).toString
-    val trainingDataFilePath = Paths.get(outputDataDir, TRAINING_DIRNAME).toString
-    val validationDataFilePath = Paths.get(outputDataDir, VALIDATION_DIRNAME).toString
-    val schemaFilePath = Paths.get(outputDataDir, SCHEMA_DIRNAME).toString
+    val lastStage = preprocPipeline.getStages.last
+    val pipeFeaturesColParam = lastStage.getParam("outputCol")
+    val pipeFeaturesCol = lastStage.getOrDefault(pipeFeaturesColParam).asInstanceOf[String]
+    val pipeLabelColParam = wordVectorizer.getParam("labelCol")
+    val pipeLabelCol = wordVectorizer.getOrDefault(pipeLabelColParam).asInstanceOf[String]
+    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](pipeFeaturesCol).size
+    val Array(procDictionarySizeCol, procWordIndicesStrCol, procWordCountsStrCol, procLabelCol) = SchemaForProcDataFiles.fieldNames
+
+    val dictionaryFilePath = Paths.get(outputDataDir, DictionaryDirName).toString
+    val trainingDataFilePath = Paths.get(outputDataDir, TrainingDirName).toString
+    val validationDataFilePath = Paths.get(outputDataDir, ValidationDirName).toString
+
 
     logger.info("Writing dictionary to CSV...")
     val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
@@ -110,53 +116,37 @@ object RunClassifier extends CanSpark {
         v.values.mkString(",")
     }
 
-    val wordIndicesCol = "word_indices_string"
-    val wordCountsCol = "word_counts_string"
-    val dictionarySizeCol = "dictionary_size"
 
     logger.info("Writing training data to CSV...")
     val trainingDataToWrite = trainingDataProcessed.select(
-      lit(numFeatures) as dictionarySizeCol,
-      getSparseIndices(col(featuresCol)) as wordIndicesCol,
-      getSparseValues(col(featuresCol)) as wordCountsCol,
-      col(labelCol)
+      lit(numFeatures) as procDictionarySizeCol,
+      getSparseIndices(col(pipeFeaturesCol)) as procWordIndicesStrCol,
+      getSparseValues(col(pipeFeaturesCol)) as procWordCountsStrCol,
+      col(pipeLabelCol) as procLabelCol
     )
     trainingDataToWrite.write
       .mode("overwrite")
       .csv(trainingDataFilePath)
 
+
     logger.info("Writing validation data to CSV...")
     val validationDataToWrite = validationDataProcessed.select(
-      getSparseIndices(col(featuresCol)) as wordIndicesCol,
-      getSparseValues(col(featuresCol)) as wordCountsCol,
-      col(labelCol)
+      getSparseIndices(col(pipeFeaturesCol)) as procWordIndicesStrCol,
+      getSparseValues(col(pipeFeaturesCol)) as procWordCountsStrCol,
+      col(pipeLabelCol) as procLabelCol
     )
     validationDataToWrite.write
     .mode("overwrite")
     .csv(validationDataFilePath)
-
-    logger.info("Writing schemas to CSV...")
-    import spark.implicits._
-    Seq(
-      dictionaryFilePath -> dictionary.schema.json,
-      trainingDataFilePath -> trainingDataToWrite.schema.json,
-      validationDataFilePath -> validationDataToWrite.schema.json
-    ).toDF(SCHEMA_DATAPATH_COLUMN, SCHEMA_DATASCHEMA_COLUMN)
-      .coalesce(1)
-      .write
-      .mode("overwrite")
-      .option("header", "true")
-      .csv(schemaFilePath)
   }
 
   def runSparkML(inputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val schemaDir = Paths.get(inputDataDir, SCHEMA_DIRNAME).toString
-    val trainingDir = Paths.get(inputDataDir, TRAINING_DIRNAME).toString
-    val validationDir = Paths.get(inputDataDir, VALIDATION_DIRNAME).toString
+    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
     logger.info("Loading data files...")
-    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir, schemaDir)
-    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir, schemaDir)
+    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir)
 
     val Array(dictionarySizeCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
     val featuresCol = "word_vector"

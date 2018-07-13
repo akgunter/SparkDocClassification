@@ -17,16 +17,30 @@ import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 
 object FileUtil {
-  val DICTIONARY_DIRNAME: String = "Dictionary"
-  val TRAINING_DIRNAME: String = "Training"
-  val VALIDATION_DIRNAME: String = "Validation"
-  val SCHEMA_DIRNAME: String = "Schema"
+  val LabelPrefix: String = "class"
+  val LabelPattern: String = s"$LabelPrefix[A-Z]*"
 
-  val LABEL_PREFIX: String = "class"
-  val LABEL_PATTERN: String = s"$LABEL_PREFIX[A-Z]*"
+  val DictionaryDirName: String = "Dictionary"
+  val TrainingDirName: String = "Training"
+  val ValidationDirName: String = "Validation"
+  val SchemaDirName: String = "Schema"
 
-  val SCHEMA_DATAPATH_COLUMN: String = "data_path"
-  val SCHEMA_DATASCHEMA_COLUMN: String = "data_schema"
+  val SchemaForRawDataFiles: StructType = new StructType()
+    .add("word", StringType, nullable = false)
+    .add("word_count", IntegerType, nullable = false)
+
+  val SchemaForProcDataFiles: StructType = new StructType()
+    .add("dictionary_size", IntegerType, nullable = false)
+    .add("word_indices_str", StringType, nullable = false)
+    .add("word_counts_str", StringType, nullable = false)
+    .add("label", IntegerType, nullable = true)
+
+  val SchemaForDictionaryFiles: StructType = new StructType()
+    .add("word", StringType, nullable = false)
+    .add("word_index", IntegerType, nullable = false)
+
+
+  def createCSVDirectoryPattern(dirPath: String): String = Paths.get(dirPath, "/*.csv").toString
 
   def getDataFiles(baseDirPath: String): Seq[String] = {
     new File(baseDirPath)
@@ -40,7 +54,7 @@ object FileUtil {
       .listFiles
       .filter {
         name =>
-          name.isDirectory && LABEL_PATTERN.r.findFirstIn(name.getName).isDefined
+          name.isDirectory && LabelPattern.r.findFirstIn(name.getName).isDefined
       }
       .map(_.toString)
   }
@@ -59,11 +73,11 @@ object FileUtil {
   }
 
   def getLabelFromFilePath(filePath: String): String = {
-    val foundPattern = LABEL_PATTERN.r.findFirstIn(filePath)
+    val foundPattern = LabelPattern.r.findFirstIn(filePath)
 
     foundPattern match {
-      case Some(v) => v.substring(LABEL_PREFIX.length)
-      case None => throw new IllegalArgumentException(s"File path $filePath is unlabelled")
+      case Some(v) => v.substring(LabelPrefix.length)
+      case None => null
     }
   }
 
@@ -78,80 +92,59 @@ object FileUtil {
   }
 
   def dataFrameFromRawDirectory(baseDirPath: String, isLabelled: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
     import org.apache.spark.sql.functions._
-
-    val fileSchema = new StructType()
-      .add("word", StringType)
-      .add("word_count", IntegerType)
 
     val dirPattern = {
       if (isLabelled)
-        Paths.get(baseDirPath, LABEL_PATTERN + "/*.res").toString
+        Paths.get(baseDirPath, LabelPattern + "/*.res").toString
       else
         Paths.get(baseDirPath, "/*.res").toString
     }
 
+    val Array(rawWordCol, rawWordCountCol) = SchemaForRawDataFiles.fieldNames
+    val inputFileCol = "input_file"
+    val labelStrCol = "label_str"
+    val labelCol = "label"
+
     val df = spark.read
-      .schema(fileSchema)
+      .schema(SchemaForRawDataFiles)
       .option("mode", "DROPMALFORMED")
       .option("delimiter", " ")
       .csv(dirPattern)
       .select(
-        trim(lower('word)) as "word",
-        'word_count
+        trim(lower(col(rawWordCol))) as rawWordCol,
+        col(rawWordCountCol)
       )
-      .withColumn("input_file", input_file_name)
+      .withColumn(inputFileCol, input_file_name)
 
-    if (isLabelled) {
-      val getLabelStr = udf((path: String) => getLabelFromFilePath(path))
-      val getLabel = udf((labelStr: String) => labelToInt(labelStr))
-      df.withColumn("label_str", getLabelStr(col("input_file")))
-        .withColumn("label", getLabel(col("label_str")))
+
+    val getLabelStr = udf {
+      path: String => getLabelFromFilePath(path)
     }
-    else df
+    val getLabel = udf {
+      labelStr: String =>
+        Option(labelStr).map(labelToInt).orNull
+    }
+
+    df.withColumn(labelStrCol, getLabelStr(col(inputFileCol)))
+      .withColumn(labelCol, getLabel(col(labelStrCol)))
   }
 
-  protected def getDataFrameSchemas(schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
-    val schemaForSchemaDF = new StructType()
-      .add(SCHEMA_DATAPATH_COLUMN, StringType)
-      .add(SCHEMA_DATASCHEMA_COLUMN, StringType)
-
-    val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
-    spark.read
-      .option("header", "true")
-      .csv(schemaDirPattern)
-  }
-
-  def dataFrameFromProcessedDirectory(baseDirPath: String, schemaDirPath: String)(implicit spark: SparkSession): DataFrame = {
-    val schemaDF = getDataFrameSchemas(schemaDirPath)
-
-    val dataSchemaJSON = schemaDF.where(s"$SCHEMA_DATAPATH_COLUMN == '$baseDirPath'")
-      .select(SCHEMA_DATASCHEMA_COLUMN)
-      .head
-      .getString(0)
-    val dataSchema = DataType.fromJson(dataSchemaJSON).asInstanceOf[StructType]
-
-    val baseDirPattern = Paths.get(baseDirPath, "/*.csv").toString
+  def dataFrameFromProcessedDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
+    val baseDirPattern = createCSVDirectoryPattern(baseDirPath)
 
     spark.read
       .option("header", "false")
-      .schema(dataSchema)
+      .schema(SchemaForProcDataFiles)
       .csv(baseDirPattern)
   }
 
-  def writeProcessedDataFrame(dataFrame: DataFrame, dirPath: String, schemaDirPath: String): Unit = {
-    val spark = dataFrame.sparkSession
+  def dataFrameFromDictionaryDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
+    val baseDirPattern = createCSVDirectoryPattern(baseDirPath)
 
-    val schemaForSchemaDF = new StructType()
-      .add(SCHEMA_DATAPATH_COLUMN, StringType)
-      .add(SCHEMA_DATASCHEMA_COLUMN, StringType)
-
-    val schemaDirPattern = Paths.get(schemaDirPath, "/*.csv").toString
-    val schemaDF = spark.read
-      .option("header", "true")
-      .csv(schemaDirPattern)
-
-
+    spark.read
+      .option("header", "false")
+      .schema(SchemaForDictionaryFiles)
+      .csv(baseDirPattern)
   }
 }
