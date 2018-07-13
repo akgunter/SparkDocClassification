@@ -3,7 +3,8 @@ package net.ddns.akgunter.spark_learning.util
 import java.io.File
 import java.nio.file.Paths
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator
@@ -72,12 +73,16 @@ object FileUtil {
     getDataFiles(baseDirPath)
   }
 
+  def getLabelFromFilePath(col: Column): Column = {
+    regexp_extract(col, LabelPattern, 0)
+  }
+
   def getLabelFromFilePath(filePath: String): String = {
     val foundPattern = LabelPattern.r.findFirstIn(filePath)
 
     foundPattern match {
       case Some(v) => v.substring(LabelPrefix.length)
-      case None => null
+      case None => throw new IllegalArgumentException(s"File path $filePath is unlabelled")
     }
   }
 
@@ -92,8 +97,6 @@ object FileUtil {
   }
 
   def dataFrameFromRawDirectory(baseDirPath: String, isLabelled: Boolean)(implicit spark: SparkSession): DataFrame = {
-    import org.apache.spark.sql.functions._
-
     val dirPattern = {
       if (isLabelled)
         Paths.get(baseDirPath, LabelPattern + "/*.res").toString
@@ -117,16 +120,12 @@ object FileUtil {
       )
       .withColumn(inputFileCol, input_file_name)
 
-
-    val getLabelStr = udf {
-      path: String => getLabelFromFilePath(path)
-    }
     val getLabel = udf {
       labelStr: String =>
-        Option(labelStr).map(labelToInt).orNull
+        Option(labelStr).map(labelToInt).orNull: Int
     }
 
-    df.withColumn(labelStrCol, getLabelStr(col(inputFileCol)))
+    df.withColumn(labelStrCol, getLabelFromFilePath(col(inputFileCol)))
       .withColumn(labelCol, getLabel(col(labelStrCol)))
   }
 
