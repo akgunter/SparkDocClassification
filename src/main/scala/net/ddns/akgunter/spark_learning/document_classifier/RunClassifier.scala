@@ -70,7 +70,7 @@ object RunClassifier extends CanSpark {
       //.setSelectorType("fpr")
       //.setFpr(0.00001)
 
-    val preprocStages = Array(commonElementFilter, wordVectorizer, vectorSlicer)
+    val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
 
@@ -234,135 +234,6 @@ object RunClassifier extends CanSpark {
         .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
       .pretrain(false)
       .backprop(true)
-      .build
-
-    val voidConfig = VoidConfiguration.builder()
-      .unicastPort(4050)
-      .networkMask("10.0.0.0/24")
-      .controllerAddress("127.0.0.1")
-      .executionMode(ExecutionMode.AVERAGING)
-      .build
-
-    val trainingMaster = new ParameterAveragingTrainingMaster.Builder(1)
-      .rddTrainingApproach(RDDTrainingApproach.Export)
-      .exportDirectory("/tmp/alex-spark/SparkLearning")
-      .build
-
-    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, trainingMaster)
-
-    logger.info("Training neural network...")
-    val trainedNet = sparkNet.fit(trainingRDD)
-
-    val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
-    val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
-
-    logger.info("Evaluating training performance...")
-    val eval = new Evaluation(numClasses)
-    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, trainedNet)
-    logger.info(eval.stats())
-
-    logger.info("Evaluating validation performance...")
-    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, trainedNet)
-    logger.info(eval.stats())
-  }
-
-  def loadData(trainingDir: String, validationDir: String)(implicit spark: SparkSession):
-    (DataFrame, DataFrame, String, String, Integer, Integer) = {
-
-      val commonElementFilter = new CommonElementFilter()
-        .setDropFreq(0.1)
-      val wordVectorizer = new WordCountToVec()
-      val vectorSlicer = new VectorSlicer()
-        .setInputCol("raw_word_vector")
-        .setOutputCol("sliced_vector")
-        .setIndices((0 until 10).toArray)
-      val binarizer = new Binarizer()
-        .setThreshold(0.0)
-        .setInputCol("raw_word_vector")
-        //.setInputCol("sliced_vector")
-        .setOutputCol("binarized_word_vector")
-      val idf = new IDF()
-        .setInputCol("binarized_word_vector")
-        .setOutputCol("tfidf_vector")
-        .setMinDocFreq(2)
-      val chiSel = new ChiSqSelector()
-        .setFeaturesCol("tfidf_vector")
-        .setLabelCol("label")
-        .setOutputCol("chi_sel_features")
-        .setSelectorType("fdr")
-        .setFdr(0.005)
-      //.setSelectorType("fpr")
-      //.setFpr(0.00001)
-
-      val preprocPipeline = new Pipeline()
-        .setStages(Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel))
-
-      logger.info("Loading data...")
-      val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
-      val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
-
-      logger.info("Fitting preprocessing pipeline...")
-      val preprocModel = preprocPipeline.fit(trainingData)
-
-      logger.info("Preprocessing data...")
-      val trainingDataProcessed = preprocModel.transform(trainingData)
-      val validationDataProcessed = preprocModel.transform(validationData)
-
-      val lastStage = preprocPipeline.getStages.last
-      val featuresColParam = lastStage.getParam("outputCol")
-      val featuresCol = lastStage.getOrDefault(featuresColParam).asInstanceOf[String]
-
-      val numFeatures = trainingDataProcessed.head.getAs[SparseVector](featuresCol).size
-      val numClasses = getLabelDirectories(trainingDir).length
-
-      (trainingDataProcessed, validationDataProcessed, featuresCol, "label", numFeatures, numClasses)
-  }
-
-  def runDL4JOld(trainingData: DataFrame,
-                 validationData: DataFrame,
-                 featuresCol: String,
-                 labelCol: String,
-                 numFeatures: Int,
-                 numClasses: Int)(implicit spark: SparkSession): Unit = {
-
-    val trainingRDD = trainingData.rdd.map {
-      row =>
-        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
-        val label = row.getAs[Int](labelCol)
-        val fvec = Nd4j.create(sparseVector)
-        val lvec = Nd4j.zeros(numClasses)
-        lvec.putScalar(label, 1)
-        new DataSet(fvec, lvec)
-    }.toJavaRDD
-    val validationRDD = validationData.rdd.map {
-      row =>
-        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
-        val label = row.getAs[Int](labelCol)
-        val fvec = Nd4j.create(sparseVector)
-        val lvec = Nd4j.zeros(numClasses)
-        lvec.putScalar(label, 1)
-        new DataSet(fvec, lvec)
-    }.toJavaRDD
-
-    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
-    val nnConf = new NeuralNetConfiguration.Builder()
-      .activation(Activation.LEAKYRELU)
-      .weightInit(WeightInit.XAVIER)
-      .updater(new Nesterovs(0.02))
-      .l2(1e-4)
-      .list()
-      .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(numClasses).build)
-      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                  .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
-      .pretrain(false)
-      .backprop(true)
-      .build
-
-    val voidConfig = VoidConfiguration.builder()
-      .unicastPort(4050)
-      .networkMask("10.0.0.0/24")
-      .controllerAddress("127.0.0.1")
-      .executionMode(ExecutionMode.AVERAGING)
       .build
 
     val trainingMaster = new ParameterAveragingTrainingMaster.Builder(1)
