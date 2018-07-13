@@ -65,7 +65,11 @@ object FileUtil {
   }
 
   def getLabelFromFilePath(col: Column): Column = {
-    regexp_extract(col, LabelPattern, 0)
+    regexp_replace(
+      regexp_extract(col, LabelPattern, 0),
+      LabelPrefix,
+      ""
+    )
   }
 
   def getLabelFromFilePath(filePath: String): String = {
