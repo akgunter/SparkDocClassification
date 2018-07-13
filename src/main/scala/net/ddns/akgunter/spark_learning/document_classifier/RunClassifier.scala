@@ -92,19 +92,11 @@ object RunClassifier extends CanSpark {
     val pipeLabelColParam = wordVectorizer.getParam("labelCol")
     val pipeLabelCol = wordVectorizer.getOrDefault(pipeLabelColParam).asInstanceOf[String]
     val numFeatures = trainingDataProcessed.head.getAs[SparseVector](pipeFeaturesCol).size
-    val Array(procDictionarySizeCol, procWordIndicesStrCol, procWordCountsStrCol, procLabelCol) = SchemaForProcDataFiles.fieldNames
+    val Array(procNumFeaturesCol, procWordIndicesStrCol, procWordCountsStrCol, procLabelCol) = SchemaForProcDataFiles.fieldNames
 
-    val dictionaryFilePath = Paths.get(outputDataDir, DictionaryDirName).toString
     val trainingDataFilePath = Paths.get(outputDataDir, TrainingDirName).toString
     val validationDataFilePath = Paths.get(outputDataDir, ValidationDirName).toString
 
-
-    logger.info("Writing dictionary to CSV...")
-    val wordVectorizerModel = preprocModel.stages(preprocStages.indexOf(wordVectorizer)).asInstanceOf[WordCountToVecModel]
-    val dictionary = wordVectorizerModel.getDictionary
-    dictionary.write
-      .mode("overwrite")
-      .csv(dictionaryFilePath)
 
     val getSparseIndices = udf {
       v: SparseVector =>
@@ -115,10 +107,9 @@ object RunClassifier extends CanSpark {
         v.values.mkString(",")
     }
 
-
     logger.info("Writing training data to CSV...")
     val trainingDataToWrite = trainingDataProcessed.select(
-      lit(numFeatures) as procDictionarySizeCol,
+      lit(numFeatures) as procNumFeaturesCol,
       getSparseIndices(col(pipeFeaturesCol)) as procWordIndicesStrCol,
       getSparseValues(col(pipeFeaturesCol)) as procWordCountsStrCol,
       col(pipeLabelCol) as procLabelCol
@@ -147,27 +138,27 @@ object RunClassifier extends CanSpark {
     val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir)
     val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir)
 
-    val Array(dictionarySizeCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
+    val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
     val featuresCol = "word_vector"
-    val numFeatures = trainingDataProcessed.head.getAs[Int](dictionarySizeCol)
+    val numFeatures = trainingDataProcessed.head.getAs[Int](numFeaturesCol)
 
     logger.info("Creating data sets...")
     val createSparseColumn = udf {
-      (dictionarySize: Int, wordIndicesStr: String, wordCountsStr: String) =>
+      (numFeatures: Int, wordIndicesStr: String, wordCountsStr: String) =>
         val wordIndices = Option(wordIndicesStr)
           .map(_.split(",").map(_.toInt))
           .getOrElse(Array.empty[Int])
         val wordCounts = Option(wordCountsStr)
           .map(_.split(",").map(_.toDouble))
           .getOrElse(Array.empty[Double])
-        new SparseVector(dictionarySize, wordIndices, wordCounts)
+        new SparseVector(numFeatures, wordIndices, wordCounts)
     }
     val trainingData = trainingDataProcessed.select(
-      createSparseColumn(col(dictionarySizeCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
       col(labelCol)
     )
     val validationData = validationDataProcessed.select(
-      createSparseColumn(col(dictionarySizeCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
       col(labelCol)
     )
 

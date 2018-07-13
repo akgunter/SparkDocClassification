@@ -12,7 +12,6 @@ object FileUtil {
   val LabelPrefix: String = "class"
   val LabelPattern: String = s"$LabelPrefix[A-Z]*"
 
-  val DictionaryDirName: String = "Dictionary"
   val TrainingDirName: String = "Training"
   val ValidationDirName: String = "Validation"
   val SchemaDirName: String = "Schema"
@@ -22,15 +21,10 @@ object FileUtil {
     .add("word_count", IntegerType, nullable = false)
 
   val SchemaForProcDataFiles: StructType = new StructType()
-    .add("dictionary_size", IntegerType, nullable = false)
+    .add("num_features", IntegerType, nullable = false)
     .add("word_indices_str", StringType, nullable = false)
     .add("word_counts_str", StringType, nullable = false)
     .add("label", IntegerType, nullable = true)
-
-  val SchemaForDictionaryFiles: StructType = new StructType()
-    .add("word", StringType, nullable = false)
-    .add("word_index", IntegerType, nullable = false)
-
 
   def createCSVDirectoryPattern(dirPath: String): String = Paths.get(dirPath, "/*.csv").toString
 
@@ -130,15 +124,6 @@ object FileUtil {
     spark.read
       .option("header", "false")
       .schema(SchemaForProcDataFiles)
-      .csv(baseDirPattern)
-  }
-
-  def dataFrameFromDictionaryDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
-    val baseDirPattern = createCSVDirectoryPattern(baseDirPath)
-
-    spark.read
-      .option("header", "false")
-      .schema(SchemaForDictionaryFiles)
       .csv(baseDirPattern)
   }
 }
