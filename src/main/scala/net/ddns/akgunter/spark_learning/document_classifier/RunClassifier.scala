@@ -1,5 +1,6 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
+import java.io.File
 import java.nio.file.Paths
 import java.util.{ArrayList => JavaArrayList}
 
@@ -10,6 +11,9 @@ import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
+
+import org.datavec.api.records.reader.impl.csv.CSVRecordReader
+import org.datavec.api.split.FileSplit
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -24,8 +28,6 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import org.nd4j.parameterserver.distributed.conf.VoidConfiguration
-import org.nd4j.parameterserver.distributed.enums.ExecutionMode
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec, WordCountToVecModel}
@@ -65,10 +67,6 @@ object RunClassifier extends CanSpark {
       .setLabelCol("label")
       .setOutputCol("chi_sel_features")
       .setNumTopFeatures(8000)
-      //.setSelectorType("fdr")
-      //.setFdr(0.005)
-      //.setSelectorType("fpr")
-      //.setFpr(0.00001)
 
     val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
@@ -165,8 +163,12 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(): Unit = {
+  def runDL4J(inputDataDir: String): Unit = {
+    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
+    val trainingRecordReader = new CSVRecordReader(0, ',')
+    trainingRecordReader.initialize(new FileSplit(new File(trainingDir), Array("csv")))
   }
 
   def runDL4JSpark(inputDataDir: String)(implicit spark: SparkSession): Unit = {
