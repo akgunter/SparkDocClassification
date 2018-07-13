@@ -122,8 +122,7 @@ object FileUtil {
 
     val getLabel = udf {
       labelStr: String =>
-        // .getOrElse(null) avoids compiler error that .orNull throws
-        Option(labelStr).map(labelToInt).getOrElse(null): Int
+        Option(labelStr).map(labelToInt).getOrElse(null.asInstanceOf[Int])
     }
 
     df.withColumn(labelStrCol, getLabelFromFilePath(col(inputFileCol)))
