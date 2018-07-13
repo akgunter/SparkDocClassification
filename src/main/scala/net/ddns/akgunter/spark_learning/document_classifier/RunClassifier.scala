@@ -174,7 +174,7 @@ object RunClassifier extends CanSpark {
         new SparseVector(dictionarySize, wordIndices, wordCounts)
     }
     val trainingData = trainingDataProcessed.select(
-      createSparseColumn(col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      createSparseColumn(col(dictionarySizeCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
       col(labelCol)
     )
     val validationData = validationDataProcessed.select(
