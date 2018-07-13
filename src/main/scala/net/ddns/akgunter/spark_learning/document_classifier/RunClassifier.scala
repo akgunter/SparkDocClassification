@@ -9,7 +9,7 @@ import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, lit, udf}
+import org.apache.spark.sql.functions._
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -77,6 +77,8 @@ object RunClassifier extends CanSpark {
     val trainingData = dataFrameFromRawDirectory(trainingDir, isLabelled = true)
     val validationData = dataFrameFromRawDirectory(validationDir, isLabelled = true)
 
+    logger.info("TEST")
+    trainingData.select("input_file", "label").show(10, truncate = false)
 
     logger.info("Fitting preprocessing pipeline...")
     val preprocModel = preprocPipeline.fit(trainingData)
