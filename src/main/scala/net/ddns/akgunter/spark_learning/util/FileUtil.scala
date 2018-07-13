@@ -3,10 +3,8 @@ package net.ddns.akgunter.spark_learning.util
 import java.io.File
 import java.nio.file.Paths
 
-import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 
 object FileUtil {
@@ -109,8 +107,6 @@ object FileUtil {
     df.withColumn(labelStrCol, getLabelFromFilePath(col(inputFileCol)))
       .withColumn(labelCol, getLabel(col(labelStrCol)))
   }
-
-
 
   def dataFrameFromProcessedDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
     val baseDirPattern = createCSVDirectoryPattern(baseDirPath)

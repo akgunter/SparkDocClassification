@@ -1,9 +1,10 @@
 package net.ddns.akgunter.spark_learning.util
 
 import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 
 object DataFrameUtil {
   val SchemaForRawDataFiles: StructType = new StructType()
@@ -16,8 +17,12 @@ object DataFrameUtil {
     .add("word_counts_str", StringType, nullable = false)
     .add("label", IntegerType, nullable = true)
 
+  val SchemaForCoreDataFrames: StructType = new StructType()
+    .add("word_vector", VectorType, nullable = false)
+    .add("label", IntegerType, nullable = true)
 
-  def pipelineDFToProcessedDF(pipelineDF: DataFrame, pipelineFeaturesCol: String, pipelineLabelsCol: String): DataFrame = {
+
+  def sparseDFToCSVReadyDF(sparseDF: DataFrame, sparseFeaturesCol: String, sparseLabelsCol: String): DataFrame = {
     val getSparseIndices = udf {
       v: SparseVector =>
         v.indices.mkString(",")
@@ -27,14 +32,35 @@ object DataFrameUtil {
         v.values.mkString(",")
     }
 
-    val Array(procNumFeaturesCol, procWordIndicesStrCol, procWordCountsStrCol, procLabelCol) = SchemaForProcDataFiles.fieldNames
-    val numFeatures = pipelineDF.head.getAs[SparseVector](pipelineFeaturesCol).size
+    val Array(csvNumFeaturesCol, csvWordIndicesStrCol, csvWordCountsStrCol, csvLabelCol) = SchemaForProcDataFiles.fieldNames
+    val numFeatures = sparseDF.head.getAs[SparseVector](sparseFeaturesCol).size
 
-    pipelineDF.select(
-      lit(numFeatures) as procNumFeaturesCol,
-      getSparseIndices(col(pipelineFeaturesCol)) as procWordIndicesStrCol,
-      getSparseValues(col(pipelineFeaturesCol)) as procWordCountsStrCol,
-      col(pipelineLabelsCol) as procLabelCol
+    sparseDF.select(
+      lit(numFeatures) as csvNumFeaturesCol,
+      getSparseIndices(col(sparseFeaturesCol)) as csvWordIndicesStrCol,
+      getSparseValues(col(sparseFeaturesCol)) as csvWordCountsStrCol,
+      col(sparseLabelsCol) as csvLabelCol
+    )
+  }
+
+  def sparseDFFromCSVReadyDF(csvReadyDF: DataFrame): DataFrame = {
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
+    val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = csvReadyDF.columns
+
+    val createSparseColumn = udf {
+      (numFeatures: Int, wordIndicesStr: String, wordCountsStr: String) =>
+        val wordIndices = Option(wordIndicesStr)
+          .map(_.split(",").map(_.toInt))
+          .getOrElse(Array.empty[Int])
+        val wordCounts = Option(wordCountsStr)
+          .map(_.split(",").map(_.toDouble))
+          .getOrElse(Array.empty[Double])
+        new SparseVector(numFeatures, wordIndices, wordCounts)
+    }
+
+    csvReadyDF.select(
+      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as sparseFeaturesCol,
+      col(labelCol) as sparseLabelsCol
     )
   }
 }

@@ -1,6 +1,5 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
-import java.io.File
 import java.nio.file.Paths
 import java.util.{ArrayList => JavaArrayList}
 
@@ -12,8 +11,6 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
-import org.datavec.api.records.reader.impl.csv.CSVRecordReader
-import org.datavec.api.split.FileSplit
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -81,8 +78,8 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Preprocessing data...")
-    val trainingDataPipelined = preprocModel.transform(trainingData)
-    val validationDataPipelined = preprocModel.transform(validationData)
+    val trainingDataSparse = preprocModel.transform(trainingData)
+    val validationDataSparse = preprocModel.transform(validationData)
 
 
     val lastStage = preprocPipeline.getStages.last
@@ -96,14 +93,14 @@ object RunClassifier extends CanSpark {
     val validationDataFilePath = Paths.get(outputDataDir, ValidationDirName).toString
 
     logger.info("Writing training data to CSV...")
-    val trainingDataProcessed = pipelineDFToProcessedDF(trainingDataPipelined, pipeFeaturesCol, pipeLabelCol)
-    trainingDataProcessed.write
+    val trainingDataCSVReady = sparseDFToCSVReadyDF(trainingDataSparse, pipeFeaturesCol, pipeLabelCol)
+    trainingDataCSVReady.write
       .mode("overwrite")
       .csv(trainingDataFilePath)
 
     logger.info("Writing validation data to CSV...")
-    val validationDataProcessed = pipelineDFToProcessedDF(validationDataPipelined, pipeFeaturesCol, pipeLabelCol)
-    validationDataProcessed.write
+    val validationDataCSVReady = sparseDFToCSVReadyDF(validationDataSparse, pipeFeaturesCol, pipeLabelCol)
+    validationDataCSVReady.write
     .mode("overwrite")
     .csv(validationDataFilePath)
   }
@@ -113,44 +110,32 @@ object RunClassifier extends CanSpark {
     val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
     logger.info("Loading data files...")
-    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir)
-    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir)
+    val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
 
-    val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
-    val featuresCol = "word_vector"
-    val numFeatures = trainingDataProcessed.head.getAs[Int](numFeaturesCol)
 
     logger.info("Creating data sets...")
-    val createSparseColumn = udf {
-      (numFeatures: Int, wordIndicesStr: String, wordCountsStr: String) =>
-        val wordIndices = Option(wordIndicesStr)
-          .map(_.split(",").map(_.toInt))
-          .getOrElse(Array.empty[Int])
-        val wordCounts = Option(wordCountsStr)
-          .map(_.split(",").map(_.toDouble))
-          .getOrElse(Array.empty[Double])
-        new SparseVector(numFeatures, wordIndices, wordCounts)
-    }
-    val trainingData = trainingDataProcessed.select(
-      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
-      col(labelCol)
-    )
-    val validationData = validationDataProcessed.select(
-      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
-      col(labelCol)
-    )
+    val trainingData = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+    val validationData = sparseDFFromCSVReadyDF(validationDataCSVSourced)
 
-    val numClasses = trainingData.select(labelCol).distinct.count.toInt
+
+    val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+    val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+    val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(numFeatures, numClasses))
       .setMaxIter(100)
       //.setBlockSize(20)
-      .setFeaturesCol(featuresCol)
+      .setFeaturesCol(sparseFeaturesCol)
+      .setLabelCol(sparseLabelsCol)
+
 
     logger.info("Training neural network...")
     val mlpcModel = mlpc.fit(trainingData)
+
 
     logger.info("Calculating predictions...")
     val trainingPredictions = mlpcModel.transform(trainingData)
@@ -167,8 +152,7 @@ object RunClassifier extends CanSpark {
     val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
     val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
-    val trainingRecordReader = new CSVRecordReader(0, ',')
-    trainingRecordReader.initialize(new FileSplit(new File(trainingDir), Array("csv")))
+
   }
 
   def runDL4JSpark(inputDataDir: String)(implicit spark: SparkSession): Unit = {
@@ -176,39 +160,23 @@ object RunClassifier extends CanSpark {
     val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
     logger.info("Loading data files...")
-    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir)
-    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir)
+    val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
 
-    val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
-    val featuresCol = "word_vector"
-    val numFeatures = trainingDataProcessed.head.getAs[Int](numFeaturesCol)
 
     logger.info("Creating data sets...")
-    val createSparseColumn = udf {
-      (numFeatures: Int, wordIndicesStr: String, wordCountsStr: String) =>
-        val wordIndices = Option(wordIndicesStr)
-          .map(_.split(",").map(_.toInt))
-          .getOrElse(Array.empty[Int])
-        val wordCounts = Option(wordCountsStr)
-          .map(_.split(",").map(_.toDouble))
-          .getOrElse(Array.empty[Double])
-        new SparseVector(numFeatures, wordIndices, wordCounts)
-    }
-    val trainingData = trainingDataProcessed.select(
-      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
-      col(labelCol)
-    )
-    val validationData = validationDataProcessed.select(
-      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
-      col(labelCol)
-    )
+    val trainingData = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+    val validationData = sparseDFFromCSVReadyDF(validationDataCSVSourced)
 
-    val numClasses = trainingData.select(labelCol).distinct.count.toInt
+    val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
+    val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+    val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
 
     val trainingRDD = trainingData.rdd.map {
       row =>
-        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
-        val label = row.getAs[Int](labelCol)
+        val sparseVector = row.getAs[SparseVector](sparseFeaturesCol).toArray
+        val label = row.getAs[Int](sparseLabelsCol)
         val fvec = Nd4j.create(sparseVector)
         val lvec = Nd4j.zeros(numClasses)
         lvec.putScalar(label, 1)
@@ -216,8 +184,8 @@ object RunClassifier extends CanSpark {
     }.toJavaRDD
     val validationRDD = validationData.rdd.map {
       row =>
-        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
-        val label = row.getAs[Int](labelCol)
+        val sparseVector = row.getAs[SparseVector](sparseFeaturesCol).toArray
+        val label = row.getAs[Int](sparseLabelsCol)
         val fvec = Nd4j.create(sparseVector)
         val lvec = Nd4j.zeros(numClasses)
         lvec.putScalar(label, 1)
