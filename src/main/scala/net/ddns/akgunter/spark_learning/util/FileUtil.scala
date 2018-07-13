@@ -3,10 +3,11 @@ package net.ddns.akgunter.spark_learning.util
 import java.io.File
 import java.nio.file.Paths
 
+import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
 
+import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 
 object FileUtil {
   val LabelPrefix: String = "class"
@@ -16,15 +17,6 @@ object FileUtil {
   val ValidationDirName: String = "Validation"
   val SchemaDirName: String = "Schema"
 
-  val SchemaForRawDataFiles: StructType = new StructType()
-    .add("word", StringType, nullable = false)
-    .add("word_count", IntegerType, nullable = false)
-
-  val SchemaForProcDataFiles: StructType = new StructType()
-    .add("num_features", IntegerType, nullable = false)
-    .add("word_indices_str", StringType, nullable = false)
-    .add("word_counts_str", StringType, nullable = false)
-    .add("label", IntegerType, nullable = true)
 
   def createCSVDirectoryPattern(dirPath: String): String = Paths.get(dirPath, "/*.csv").toString
 
@@ -117,6 +109,8 @@ object FileUtil {
     df.withColumn(labelStrCol, getLabelFromFilePath(col(inputFileCol)))
       .withColumn(labelCol, getLabel(col(labelStrCol)))
   }
+
+
 
   def dataFrameFromProcessedDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
     val baseDirPattern = createCSVDirectoryPattern(baseDirPath)

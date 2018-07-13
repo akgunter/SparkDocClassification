@@ -30,6 +30,7 @@ import org.nd4j.parameterserver.distributed.enums.ExecutionMode
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec, WordCountToVecModel}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
+import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 
 
 object RunMode extends Enumeration {
@@ -82,8 +83,8 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Preprocessing data...")
-    val trainingDataProcessed = preprocModel.transform(trainingData)
-    val validationDataProcessed = preprocModel.transform(validationData)
+    val trainingDataPipelined = preprocModel.transform(trainingData)
+    val validationDataPipelined = preprocModel.transform(validationData)
 
 
     val lastStage = preprocPipeline.getStages.last
@@ -91,41 +92,20 @@ object RunClassifier extends CanSpark {
     val pipeFeaturesCol = lastStage.getOrDefault(pipeFeaturesColParam).asInstanceOf[String]
     val pipeLabelColParam = wordVectorizer.getParam("labelCol")
     val pipeLabelCol = wordVectorizer.getOrDefault(pipeLabelColParam).asInstanceOf[String]
-    val numFeatures = trainingDataProcessed.head.getAs[SparseVector](pipeFeaturesCol).size
-    val Array(procNumFeaturesCol, procWordIndicesStrCol, procWordCountsStrCol, procLabelCol) = SchemaForProcDataFiles.fieldNames
+
 
     val trainingDataFilePath = Paths.get(outputDataDir, TrainingDirName).toString
     val validationDataFilePath = Paths.get(outputDataDir, ValidationDirName).toString
 
-
-    val getSparseIndices = udf {
-      v: SparseVector =>
-        v.indices.mkString(",")
-    }
-    val getSparseValues = udf {
-      v: SparseVector =>
-        v.values.mkString(",")
-    }
-
     logger.info("Writing training data to CSV...")
-    val trainingDataToWrite = trainingDataProcessed.select(
-      lit(numFeatures) as procNumFeaturesCol,
-      getSparseIndices(col(pipeFeaturesCol)) as procWordIndicesStrCol,
-      getSparseValues(col(pipeFeaturesCol)) as procWordCountsStrCol,
-      col(pipeLabelCol) as procLabelCol
-    )
-    trainingDataToWrite.write
+    val trainingDataProcessed = pipelineDFToProcessedDF(trainingDataPipelined, pipeFeaturesCol, pipeLabelCol)
+    trainingDataProcessed.write
       .mode("overwrite")
       .csv(trainingDataFilePath)
 
-
     logger.info("Writing validation data to CSV...")
-    val validationDataToWrite = validationDataProcessed.select(
-      getSparseIndices(col(pipeFeaturesCol)) as procWordIndicesStrCol,
-      getSparseValues(col(pipeFeaturesCol)) as procWordCountsStrCol,
-      col(pipeLabelCol) as procLabelCol
-    )
-    validationDataToWrite.write
+    val validationDataProcessed = pipelineDFToProcessedDF(validationDataPipelined, pipeFeaturesCol, pipeLabelCol)
+    validationDataProcessed.write
     .mode("overwrite")
     .csv(validationDataFilePath)
   }
