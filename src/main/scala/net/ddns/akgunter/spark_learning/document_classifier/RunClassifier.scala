@@ -169,8 +169,101 @@ object RunClassifier extends CanSpark {
 
   }
 
-  def runDL4JSpark()(implicit spark: SparkSession): Unit = {
+  def runDL4JSpark(inputDataDir: String)(implicit spark: SparkSession): Unit = {
+    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
+    logger.info("Loading data files...")
+    val trainingDataProcessed = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataProcessed = dataFrameFromProcessedDirectory(validationDir)
+
+    val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = trainingDataProcessed.columns
+    val featuresCol = "word_vector"
+    val numFeatures = trainingDataProcessed.head.getAs[Int](numFeaturesCol)
+
+    logger.info("Creating data sets...")
+    val createSparseColumn = udf {
+      (numFeatures: Int, wordIndicesStr: String, wordCountsStr: String) =>
+        val wordIndices = Option(wordIndicesStr)
+          .map(_.split(",").map(_.toInt))
+          .getOrElse(Array.empty[Int])
+        val wordCounts = Option(wordCountsStr)
+          .map(_.split(",").map(_.toDouble))
+          .getOrElse(Array.empty[Double])
+        new SparseVector(numFeatures, wordIndices, wordCounts)
+    }
+    val trainingData = trainingDataProcessed.select(
+      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      col(labelCol)
+    )
+    val validationData = validationDataProcessed.select(
+      createSparseColumn(col(numFeaturesCol), col(wordIndicesCol), col(wordCountsCol)) as featuresCol,
+      col(labelCol)
+    )
+
+    val numClasses = trainingData.select(labelCol).distinct.count.toInt
+
+    val trainingRDD = trainingData.rdd.map {
+      row =>
+        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
+        val label = row.getAs[Int](labelCol)
+        val fvec = Nd4j.create(sparseVector)
+        val lvec = Nd4j.zeros(numClasses)
+        lvec.putScalar(label, 1)
+        new DataSet(fvec, lvec)
+    }.toJavaRDD
+    val validationRDD = validationData.rdd.map {
+      row =>
+        val sparseVector = row.getAs[SparseVector](featuresCol).toArray
+        val label = row.getAs[Int](labelCol)
+        val fvec = Nd4j.create(sparseVector)
+        val lvec = Nd4j.zeros(numClasses)
+        lvec.putScalar(label, 1)
+        new DataSet(fvec, lvec)
+    }.toJavaRDD
+
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val nnConf = new NeuralNetConfiguration.Builder()
+      .activation(Activation.LEAKYRELU)
+      .weightInit(WeightInit.XAVIER)
+      .updater(new Nesterovs(0.02))
+      .l2(1e-4)
+      .list()
+      .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(numClasses).build)
+      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+        .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
+      .pretrain(false)
+      .backprop(true)
+      .build
+
+    val voidConfig = VoidConfiguration.builder()
+      .unicastPort(4050)
+      .networkMask("10.0.0.0/24")
+      .controllerAddress("127.0.0.1")
+      .executionMode(ExecutionMode.AVERAGING)
+      .build
+
+    val trainingMaster = new ParameterAveragingTrainingMaster.Builder(1)
+      .rddTrainingApproach(RDDTrainingApproach.Export)
+      .exportDirectory("/tmp/alex-spark/SparkLearning")
+      .build
+
+    val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, trainingMaster)
+
+    logger.info("Training neural network...")
+    val trainedNet = sparkNet.fit(trainingRDD)
+
+    val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
+    val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
+
+    logger.info("Evaluating training performance...")
+    val eval = new Evaluation(numClasses)
+    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, trainedNet)
+    logger.info(eval.stats())
+
+    logger.info("Evaluating validation performance...")
+    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, trainedNet)
+    logger.info(eval.stats())
   }
 
   def loadData(trainingDir: String, validationDir: String)(implicit spark: SparkSession):
@@ -223,34 +316,6 @@ object RunClassifier extends CanSpark {
       val numClasses = getLabelDirectories(trainingDir).length
 
       (trainingDataProcessed, validationDataProcessed, featuresCol, "label", numFeatures, numClasses)
-  }
-
-  def runSparkML(trainingData: DataFrame,
-                 validationData: DataFrame,
-                 featuresCol: String,
-                 labelCol: String,
-                 numFeatures: Int,
-                 numClasses: Int)(implicit spark: SparkSession): Unit = {
-
-    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
-    val mlpc = new MultilayerPerceptronClassifier()
-      .setLayers(Array(numFeatures, numClasses))
-      .setMaxIter(100)
-      //.setBlockSize(20)
-      .setFeaturesCol(featuresCol)
-
-    logger.info("Training neural network...")
-    val mlpcModel = mlpc.fit(trainingData)
-
-    logger.info("Calculating predictions...")
-    val trainingPredictions = mlpcModel.transform(trainingData)
-    val validationPredictions = mlpcModel.transform(validationData)
-
-    val evaluator = new MulticlassClassificationEvaluator()
-      .setMetricName("accuracy")
-
-    logger.info(s"Training accuracy: ${evaluator.evaluate(trainingPredictions)}")
-    logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
   def runDL4JOld(trainingData: DataFrame,
@@ -323,15 +388,6 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats())
   }
 
-  def runML(dataDir: String, useDL4J: Boolean)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(dataDir, "Training").toString
-    val validationDir = Paths.get(dataDir, "Validation").toString
-    val (trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses) = loadData(trainingDir, validationDir)
-
-    if (useDL4J) runDL4JOld(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
-    else runSparkML(trainingData, validationData, featuresCol, labelCol, numFeatures, numClasses)
-  }
-
   def main(args: Array[String]): Unit = {
     val runMode = RunMode.withName(args(0).toUpperCase)
     val inputDataDir = args(1)
@@ -353,7 +409,8 @@ object RunClassifier extends CanSpark {
       case RunMode.SPARKML =>
         withSpark() { spark => runSparkML(inputDataDir)(spark) }
       case RunMode.DL4J => return
-      case RunMode.DL4JSPARK => return
+      case RunMode.DL4JSPARK =>
+        withSpark() { spark => runDL4JSpark(inputDataDir)(spark) }
     }
   }
 }
