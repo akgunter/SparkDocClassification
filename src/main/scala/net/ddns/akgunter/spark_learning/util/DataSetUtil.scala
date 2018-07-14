@@ -7,17 +7,13 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
 import org.apache.spark.api.java.JavaRDD
 
-import org.datavec.api.records.reader.impl.csv.CSVRecordReader
 import org.datavec.api.transform.schema.Schema
-import org.datavec.spark.transform.SparkTransformExecutor
-import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 import org.nd4j.linalg.dataset.DataSet
 
 import org.nd4j.linalg.factory.Nd4j
 
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
-import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 object DataSetUtil {
 

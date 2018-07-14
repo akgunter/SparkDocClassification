@@ -1,10 +1,10 @@
 package net.ddns.akgunter.spark_learning.util
 
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
-import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 
 object DataFrameUtil {
   val SchemaForRawDataFiles: StructType = new StructType()

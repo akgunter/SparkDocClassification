@@ -3,9 +3,9 @@ package net.ddns.akgunter.spark_learning.util
 import java.io.File
 import java.nio.file.Paths
 
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 object FileUtil {
   val LabelPrefix: String = "class"
