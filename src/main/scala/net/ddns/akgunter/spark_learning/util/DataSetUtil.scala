@@ -34,7 +34,7 @@ object DataSetUtil {
     buildDataVecSchema(updatedSchema, schemaIterator)
   }
 
-  def dl4jRDDFromSparseDataFrame(dataFrame: DataFrame, numClasses: Int)(implicit spark: SparkSession): JavaRDD[DataSet] = {
+  def dl4jRDDFromSparseDataFrame(dataFrame: DataFrame, numClasses: Int): JavaRDD[DataSet] = {
     val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
 
     dataFrame.rdd.map {
