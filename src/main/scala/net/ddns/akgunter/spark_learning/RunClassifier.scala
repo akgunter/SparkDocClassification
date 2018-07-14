@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_learning.document_classifier
+package net.ddns.akgunter.spark_learning
 
 import java.nio.file.Paths
 
@@ -7,7 +7,6 @@ import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.sql.SparkSession
-
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
