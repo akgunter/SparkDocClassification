@@ -171,10 +171,6 @@ object RunClassifier extends CanSpark {
         (trainingDataSet, validationDataSet, numFeatures, numClasses)
     }
 
-    import scala.collection.JavaConversions._
-    logger.info(s"Num Labels: ${trainingDataSet.getLabels.shape.mkString(",")}")
-    logger.info(s"Feature shape: ${trainingDataSet.getFeatureMatrix.shape.mkString(",")}")
-
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val nnConf = new NeuralNetConfiguration.Builder()
       .activation(Activation.LEAKYRELU)
@@ -191,6 +187,7 @@ object RunClassifier extends CanSpark {
 
     val network = new MultiLayerNetwork(nnConf)
 
+    logger.info(s"Num layers: ${network.getLayers.length}")
 
     logger.info("Training neural network...")
     network.fit(trainingDataSet)
