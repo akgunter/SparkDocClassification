@@ -182,7 +182,7 @@ object RunClassifier extends CanSpark {
     val numEpochs = 60
     0 until numEpochs foreach {
       epoch =>
-        if (numEpochs % 5 == 0) logger.info(s"Running epoch $epoch...")
+        if (epoch % 5 == 0) logger.info(s"Running epoch $epoch...")
         network.fit(trainingDataSet)
     }
 
@@ -237,10 +237,10 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Training neural network...")
-    val numEpochs = 5
+    val numEpochs = 15
     0 until numEpochs foreach {
       epoch =>
-        if (numEpochs % 5 == 0) logger.info(s"Running epoch $epoch...")
+        if (epoch % 5 == 0) logger.info(s"Running epoch $epoch...")
         sparkNet.fit(trainingRDD)
     }
 
