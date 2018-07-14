@@ -1,32 +1,28 @@
 package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
-import java.util.{ArrayList => JavaArrayList}
 
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
-import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SparkSession
 
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 
 import org.nd4j.linalg.activations.Activation
-import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
-import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec, WordCountToVecModel}
+import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 import net.ddns.akgunter.spark_learning.util.DataSetUtil._
@@ -152,7 +148,53 @@ object RunClassifier extends CanSpark {
     val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
     val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
+    logger.info("Loading data files...")
+    val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
 
+    logger.info("Creating data sets...")
+    val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+    val validationDataSparse = sparseDFFromCSVReadyDF(validationDataCSVSourced)
+
+    val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+    val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+    val numClasses = trainingDataSparse.select(csvLabelCol).distinct.count.toInt
+
+    val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
+    val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
+
+    val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
+    val validationDataSet = dataSetFromdl4jRDD(validationRDD)
+
+
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val nnConf = new NeuralNetConfiguration.Builder()
+      .activation(Activation.LEAKYRELU)
+      .weightInit(WeightInit.XAVIER)
+      .updater(new Nesterovs(0.02))
+      .l2(1e-4)
+      .list()
+      .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(numClasses).build)
+      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+        .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
+      .pretrain(false)
+      .backprop(true)
+      .build
+
+    val network = new MultiLayerNetwork(nnConf)
+
+
+    logger.info("Training neural network...")
+    network.fit(trainingDataSet)
+
+
+    logger.info("Evaluating performance...")
+    val eval = new Evaluation()
+    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, network)
+    logger.info(eval.stats)
+
+    eval.eval(validationDataSet.getLabels, trainingDataSet.getFeatureMatrix, network)
+    logger.info(eval.stats)
   }
 
   def runDL4JSpark(inputDataDir: String)(implicit spark: SparkSession): Unit = {
@@ -204,10 +246,10 @@ object RunClassifier extends CanSpark {
 
     logger.info("Evaluating performance...")
     val trainingEval = sparkNet.doEvaluation(trainingRDD, new Evaluation(numClasses), 4)
-    logger.info(trainingEval.stats())
+    logger.info(trainingEval.stats)
 
     val validationEval = sparkNet.doEvaluation(validationRDD, new Evaluation(numClasses), 4)
-    logger.info(validationEval.stats())
+    logger.info(validationEval.stats)
   }
 
   def main(args: Array[String]): Unit = {
