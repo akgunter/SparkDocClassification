@@ -203,13 +203,11 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Evaluating performance...")
-    val trainingEval = sparkNet.doEvaluation(trainingRDD, 64, new Evaluation(numClasses))
-    logger.info(s"trainingEvalList had ${trainingEval.length} elements")
-    logger.info(trainingEval(0).stats())
+    val trainingEval = sparkNet.doEvaluation(trainingRDD, new Evaluation(numClasses), 4)
+    logger.info(trainingEval.stats())
 
-    val validationEval = sparkNet.doEvaluation(validationRDD, 64, new Evaluation(numClasses))
-    logger.info(s"validationEvalList had ${validationEval.length} elements")
-    logger.info(validationEval(0).stats())
+    val validationEval = sparkNet.doEvaluation(validationRDD, new Evaluation(numClasses), 4)
+    logger.info(validationEval.stats())
   }
 
   def main(args: Array[String]): Unit = {
