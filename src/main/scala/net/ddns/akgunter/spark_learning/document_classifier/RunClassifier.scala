@@ -260,7 +260,7 @@ object RunClassifier extends CanSpark {
     }
     val numEpochs = runMode match {
       case RunMode.PREPROCESS => 0
-      case _ => args(2).toInt
+      case _ => args(3).toInt
     }
 
     runMode match {
