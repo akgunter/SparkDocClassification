@@ -2,11 +2,10 @@ package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
 
-import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
-import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.SparkSession
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -16,17 +15,15 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
-import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
 import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
-import net.ddns.akgunter.spark_learning.util.FileUtil._
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 import net.ddns.akgunter.spark_learning.util.DataSetUtil._
-
+import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 object RunMode extends Enumeration {
   val PREPROCESS, SPARKML, DL4J, DL4JSPARK = Value
@@ -186,8 +183,8 @@ object RunClassifier extends CanSpark {
       .build
 
     val network = new MultiLayerNetwork(nnConf)
+    network.init()
 
-    logger.info(s"Num layers: ${network.getLayers.length}")
 
     logger.info("Training neural network...")
     network.fit(trainingDataSet)
