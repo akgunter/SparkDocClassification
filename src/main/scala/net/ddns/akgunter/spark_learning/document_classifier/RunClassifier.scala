@@ -12,6 +12,7 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
@@ -184,10 +185,14 @@ object RunClassifier extends CanSpark {
 
     val network = new MultiLayerNetwork(nnConf)
     network.init()
-
+    network.setListeners(new ScoreIterationListener(10))
 
     logger.info("Training neural network...")
-    network.fit(trainingDataSet)
+    0 until 30 foreach {
+      epoch =>
+        logger.info(s"Running epoch $epoch...")
+        network.fit(trainingDataSet)
+    }
 
 
     logger.info("Evaluating performance...")
