@@ -172,7 +172,8 @@ object RunClassifier extends CanSpark {
     }
 
     import scala.collection.JavaConversions._
-    logger.info(s"${trainingDataSet.size}")
+    logger.info(s"Num Labels: ${trainingDataSet.getLabels.shape.mkString(",")}")
+    logger.info(s"Feature shape: ${trainingDataSet.getFeatureMatrix.shape.mkString(",")}")
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val nnConf = new NeuralNetConfiguration.Builder()
