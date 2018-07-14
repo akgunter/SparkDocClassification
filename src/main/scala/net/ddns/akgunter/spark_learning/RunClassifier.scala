@@ -27,7 +27,7 @@ import net.ddns.akgunter.spark_learning.util.DataSetUtil._
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 
 object RunMode extends Enumeration {
-  val PREPROCESS, SPARKML, DL4J, DL4JSPARK = Value
+  val PREPROCESS, SPARKML, DL4J, DL4JDEEP, DL4JSPARK = Value
 }
 
 object RunClassifier extends CanSpark {
@@ -208,6 +208,120 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats)
   }
 
+  def runDL4JDeep(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
+    logger.info("Loading data files...")
+    val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
+    val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
+
+
+    logger.info("Creating data sets...")
+    val trainingData = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+    val validationData = sparseDFFromCSVReadyDF(validationDataCSVSourced)
+
+
+    val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+    val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+    val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
+
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
+    val mlpc = new MultilayerPerceptronClassifier()
+      .setLayers(Array(numFeatures, numClasses))
+      .setMaxIter(numEpochs)
+      //.setBlockSize(20)
+      .setFeaturesCol(sparseFeaturesCol)
+      .setLabelCol(sparseLabelsCol)
+
+
+    logger.info("Training neural network...")
+    val mlpcModel = mlpc.fit(trainingData)
+
+
+    logger.info("Calculating predictions...")
+    val trainingPredictions = mlpcModel.transform(trainingData)
+    val validationPredictions = mlpcModel.transform(validationData)
+
+    val accuracyEvaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("accuracy")
+    val precisionEvaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("weightedPrecision")
+    val recallEvaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("weightedRecall")
+    val f1Evaluator = new  MulticlassClassificationEvaluator()
+      .setMetricName("f1")
+
+    logger.info(s"Training accuracy: ${accuracyEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training precision: ${precisionEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training recall: ${recallEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training F1: ${f1Evaluator.evaluate(trainingPredictions)}")
+
+    logger.info(s"Validation accuracy: ${accuracyEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation precision: ${precisionEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation recall: ${recallEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation F1: ${f1Evaluator.evaluate(validationPredictions)}")
+  }
+
+  def runDL4J(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
+    val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
+      spark =>
+        logger.info("Loading data files...")
+        val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)(spark)
+        val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)(spark)
+
+        logger.info("Creating data sets...")
+        val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+        val validationDataSparse = sparseDFFromCSVReadyDF(validationDataCSVSourced)
+
+        val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+        val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+        val numClasses = trainingDataSparse.select(csvLabelCol).distinct.count.toInt
+
+        val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
+        val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
+
+        val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
+        val validationDataSet = dataSetFromdl4jRDD(validationRDD)
+
+        (trainingDataSet, validationDataSet, numFeatures, numClasses)
+    }
+
+    logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
+    val midLayerSize = numFeatures/2
+    val nnConf = new NeuralNetConfiguration.Builder()
+      .activation(Activation.LEAKYRELU)
+      .weightInit(WeightInit.XAVIER)
+      .updater(new Nesterovs(0.02))
+      .l2(1e-4)
+      .list()
+      .layer(0, new DenseLayer.Builder().nIn(numFeatures).nOut(midLayerSize).build)
+      .layer(1, new DenseLayer.Builder().nIn(midLayerSize).nOut(numClasses).build)
+      .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+        .activation(Activation.SOFTMAX).nIn(numClasses).nOut(numClasses).build)
+      .pretrain(false)
+      .backprop(true)
+      .build
+
+    val network = new MultiLayerNetwork(nnConf)
+    network.init()
+    network.setListeners(new ScoreIterationListener(10))
+
+    logger.info("Training neural network...")
+    0 until numEpochs foreach {
+      epoch =>
+        if (epoch % 5 == 0) logger.info(s"Running epoch $epoch...")
+        network.fit(trainingDataSet)
+    }
+
+
+    logger.info("Evaluating performance...")
+    val eval = new Evaluation()
+    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, network)
+    logger.info(eval.stats)
+
+    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, network)
+    logger.info(eval.stats)
+  }
+
   def runDL4JSpark(trainingDir: String, validationDir: String, numEpochs: Int)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
@@ -293,6 +407,8 @@ object RunClassifier extends CanSpark {
         withSpark() { spark => runSparkML(trainingDir, validationDir, numEpochs)(spark) }
       case RunMode.DL4J =>
         runDL4J(trainingDir, validationDir, numEpochs)
+      case RunMode.DL4JDEEP =>
+        runDL4JDeep(trainingDir, validationDir, numEpochs)
       case RunMode.DL4JSPARK =>
         withSpark() { spark => runDL4JSpark(trainingDir, validationDir, numEpochs)(spark) }
     }
