@@ -11,7 +11,6 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 
-
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
@@ -30,6 +29,7 @@ import net.ddns.akgunter.spark_learning.spark.CanSpark
 import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec, WordCountToVecModel}
 import net.ddns.akgunter.spark_learning.util.FileUtil._
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
+import net.ddns.akgunter.spark_learning.util.DataSetUtil._
 
 
 object RunMode extends Enumeration {
@@ -124,7 +124,7 @@ object RunClassifier extends CanSpark {
     val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
-    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(numFeatures, numClasses))
       .setMaxIter(100)
@@ -165,32 +165,16 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Creating data sets...")
-    val trainingData = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
-    val validationData = sparseDFFromCSVReadyDF(validationDataCSVSourced)
+    val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+    val validationDataSparse = sparseDFFromCSVReadyDF(validationDataCSVSourced)
 
     val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
-    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
     val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
-    val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
+    val numClasses = trainingDataSparse.select(csvLabelCol).distinct.count.toInt
 
-    val trainingRDD = trainingData.rdd.map {
-      row =>
-        val sparseVector = row.getAs[SparseVector](sparseFeaturesCol).toArray
-        val label = row.getAs[Int](sparseLabelsCol)
-        val fvec = Nd4j.create(sparseVector)
-        val lvec = Nd4j.zeros(numClasses)
-        lvec.putScalar(label, 1)
-        new DataSet(fvec, lvec)
-    }.toJavaRDD
-    val validationRDD = validationData.rdd.map {
-      row =>
-        val sparseVector = row.getAs[SparseVector](sparseFeaturesCol).toArray
-        val label = row.getAs[Int](sparseLabelsCol)
-        val fvec = Nd4j.create(sparseVector)
-        val lvec = Nd4j.zeros(numClasses)
-        lvec.putScalar(label, 1)
-        new DataSet(fvec, lvec)
-    }.toJavaRDD
+    val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
+    val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
+
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val nnConf = new NeuralNetConfiguration.Builder()
@@ -213,20 +197,19 @@ object RunClassifier extends CanSpark {
 
     val sparkNet = new SparkDl4jMultiLayer(spark.sparkContext, nnConf, trainingMaster)
 
+
     logger.info("Training neural network...")
-    val trainedNet = sparkNet.fit(trainingRDD)
+    sparkNet.fit(trainingRDD)
 
-    val trainingDataSet = DataSet.merge(new JavaArrayList(trainingRDD.collect))
-    val validationDataSet = DataSet.merge(new JavaArrayList[DataSet](validationRDD.collect))
 
-    logger.info("Evaluating training performance...")
-    val eval = new Evaluation(numClasses)
-    eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, trainedNet)
-    logger.info(eval.stats())
+    logger.info("Evaluating performance...")
+    val trainingEval = sparkNet.doEvaluation(trainingRDD, 64, new Evaluation(numClasses))
+    logger.info(s"trainingEvalList had ${trainingEval.length} elements")
+    logger.info(trainingEval(0).stats())
 
-    logger.info("Evaluating validation performance...")
-    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, trainedNet)
-    logger.info(eval.stats())
+    val validationEval = sparkNet.doEvaluation(validationRDD, 64, new Evaluation(numClasses))
+    logger.info(s"validationEvalList had ${validationEval.length} elements")
+    logger.info(validationEval(0).stats())
   }
 
   def main(args: Array[String]): Unit = {

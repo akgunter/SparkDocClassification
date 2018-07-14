@@ -17,7 +17,7 @@ object DataFrameUtil {
     .add("word_counts_str", StringType, nullable = false)
     .add("label", IntegerType, nullable = true)
 
-  val SchemaForCoreDataFrames: StructType = new StructType()
+  val SchemaForSparseDataFrames: StructType = new StructType()
     .add("word_vector", VectorType, nullable = false)
     .add("label", IntegerType, nullable = true)
 
@@ -44,7 +44,7 @@ object DataFrameUtil {
   }
 
   def sparseDFFromCSVReadyDF(csvReadyDF: DataFrame): DataFrame = {
-    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
     val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = csvReadyDF.columns
 
     val createSparseColumn = udf {

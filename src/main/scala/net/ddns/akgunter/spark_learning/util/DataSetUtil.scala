@@ -1,7 +1,11 @@
 package net.ddns.akgunter.spark_learning.util
 
-import org.apache.spark.sql.SparkSession
+import java.util.{ArrayList => JavaArrayList}
+
+import org.apache.spark.ml.linalg.SparseVector
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types._
+import org.apache.spark.api.java.JavaRDD
 
 import org.datavec.api.records.reader.impl.csv.CSVRecordReader
 import org.datavec.api.transform.schema.Schema
@@ -9,6 +13,8 @@ import org.datavec.spark.transform.SparkTransformExecutor
 import org.datavec.spark.transform.misc.StringToWritablesFunction
 
 import org.nd4j.linalg.dataset.DataSet
+
+import org.nd4j.linalg.factory.Nd4j
 
 import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
 import net.ddns.akgunter.spark_learning.util.FileUtil._
@@ -32,16 +38,21 @@ object DataSetUtil {
     buildDataVecSchema(updatedSchema, schemaIterator)
   }
 
-  def dataSetFromDataFrame(baseDirPath: String)(implicit spark: SparkSession): DataSet = {
-    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForCoreDataFrames.fieldNames
+  def dl4jRDDFromSparseDataFrame(dataFrame: DataFrame, numClasses: Int)(implicit spark: SparkSession): JavaRDD[DataSet] = {
+    val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
 
-    val dataFrameSourced = dataFrameFromProcessedDirectory(baseDirPath)
-    val dataFrameSparse = sparseDFFromCSVReadyDF(dataFrameSourced)
+    dataFrame.rdd.map {
+      row =>
+        val sparseVector = row.getAs[SparseVector](sparseFeaturesCol).toArray
+        val label = row.getAs[Int](sparseLabelsCol)
+        val fvec = Nd4j.create(sparseVector)
+        val lvec = Nd4j.zeros(numClasses)
+        lvec.putScalar(label, 1)
+        new DataSet(fvec, lvec)
+    }.toJavaRDD
+  }
 
-    // TODO: Complete this using the dataset conversion code from runDL4JSpark()
-    // TODO: Create functions to convert a DataFrame to a dense JavaRDD
-    // TODO: Create functions to convert a dense JavaRDD to a DataSet
-
-    null
+  def dataSetFromdl4jRDD(dl4jRDD: JavaRDD[DataSet]): DataSet = {
+    DataSet.merge(new JavaArrayList(dl4jRDD.collect))
   }
 }
