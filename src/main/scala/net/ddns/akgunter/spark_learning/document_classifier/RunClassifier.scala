@@ -197,7 +197,7 @@ object RunClassifier extends CanSpark {
     eval.eval(trainingDataSet.getLabels, trainingDataSet.getFeatureMatrix, network)
     logger.info(eval.stats)
 
-    eval.eval(validationDataSet.getLabels, trainingDataSet.getFeatureMatrix, network)
+    eval.eval(validationDataSet.getLabels, validationDataSet.getFeatureMatrix, network)
     logger.info(eval.stats)
   }
 
