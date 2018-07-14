@@ -151,8 +151,8 @@ object RunClassifier extends CanSpark {
         val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
         logger.info("Loading data files...")
-        val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
-        val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
+        val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)(spark)
+        val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)(spark)
 
         logger.info("Creating data sets...")
         val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
