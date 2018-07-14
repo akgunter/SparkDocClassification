@@ -96,7 +96,7 @@ object RunClassifier extends CanSpark {
     .csv(validationDataFilePath)
   }
 
-  def runSparkML(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
+  def runSparkML(trainingDir: String, validationDir: String, numEpochs: Int)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
     val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
@@ -115,7 +115,7 @@ object RunClassifier extends CanSpark {
     val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
     val mlpc = new MultilayerPerceptronClassifier()
       .setLayers(Array(numFeatures, numClasses))
-      .setMaxIter(100)
+      .setMaxIter(numEpochs)
       //.setBlockSize(20)
       .setFeaturesCol(sparseFeaturesCol)
       .setLabelCol(sparseLabelsCol)
@@ -136,7 +136,7 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(trainingDir: String, validationDir: String): Unit = {
+  def runDL4J(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
     val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
       spark =>
         logger.info("Loading data files...")
@@ -179,7 +179,6 @@ object RunClassifier extends CanSpark {
     network.setListeners(new ScoreIterationListener(10))
 
     logger.info("Training neural network...")
-    val numEpochs = 60
     0 until numEpochs foreach {
       epoch =>
         if (epoch % 5 == 0) logger.info(s"Running epoch $epoch...")
@@ -196,7 +195,7 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats)
   }
 
-  def runDL4JSpark(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
+  def runDL4JSpark(trainingDir: String, validationDir: String, numEpochs: Int)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
     val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
@@ -237,7 +236,6 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Training neural network...")
-    val numEpochs = 15
     0 until numEpochs foreach {
       epoch =>
         if (epoch % 5 == 0) logger.info(s"Running epoch $epoch...")
@@ -260,6 +258,10 @@ object RunClassifier extends CanSpark {
       case RunMode.PREPROCESS => args(2)
       case _ => ""
     }
+    val numEpochs = runMode match {
+      case RunMode.PREPROCESS => 0
+      case _ => args(2).toInt
+    }
 
     runMode match {
       case RunMode.PREPROCESS =>
@@ -275,11 +277,11 @@ object RunClassifier extends CanSpark {
       case RunMode.PREPROCESS =>
         withSpark() { spark => runPreprocess(trainingDir, validationDir, outputDataDir)(spark) }
       case RunMode.SPARKML =>
-        withSpark() { spark => runSparkML(trainingDir, validationDir)(spark) }
+        withSpark() { spark => runSparkML(trainingDir, validationDir, numEpochs)(spark) }
       case RunMode.DL4J =>
-        runDL4J(trainingDir, validationDir)
+        runDL4J(trainingDir, validationDir, numEpochs)
       case RunMode.DL4JSPARK =>
-        withSpark() { spark => runDL4JSpark(trainingDir, validationDir)(spark) }
+        withSpark() { spark => runDL4JSpark(trainingDir, validationDir, numEpochs)(spark) }
     }
   }
 }
