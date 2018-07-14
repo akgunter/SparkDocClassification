@@ -7,6 +7,7 @@ import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.sql.SparkSession
+
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
@@ -129,11 +130,24 @@ object RunClassifier extends CanSpark {
     val trainingPredictions = mlpcModel.transform(trainingData)
     val validationPredictions = mlpcModel.transform(validationData)
 
-    val evaluator = new MulticlassClassificationEvaluator()
+    val accuracyEvaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
+    val precisionEvaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("weightedPrecision")
+    val recallEvaluator = new MulticlassClassificationEvaluator()
+      .setMetricName("weightedRecall")
+    val f1Evaluator = new  MulticlassClassificationEvaluator()
+      .setMetricName("f1")
 
-    logger.info(s"Training accuracy: ${evaluator.evaluate(trainingPredictions)}")
-    logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
+    logger.info(s"Training accuracy: ${accuracyEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training precision: ${precisionEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training recall: ${recallEvaluator.evaluate(trainingPredictions)}")
+    logger.info(s"Training F1: ${f1Evaluator.evaluate(trainingPredictions)}")
+
+    logger.info(s"Validation accuracy: ${accuracyEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation precision: ${precisionEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation recall: ${recallEvaluator.evaluate(validationPredictions)}")
+    logger.info(s"Validation F1: ${f1Evaluator.evaluate(validationPredictions)}")
   }
 
   def runDL4J(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
