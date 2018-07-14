@@ -31,10 +31,7 @@ object RunMode extends Enumeration {
 }
 
 object RunClassifier extends CanSpark {
-  def runPreprocess(inputDataDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
-
+  def runPreprocess(trainingDir: String, validationDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
@@ -99,10 +96,7 @@ object RunClassifier extends CanSpark {
     .csv(validationDataFilePath)
   }
 
-  def runSparkML(inputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
-
+  def runSparkML(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
     val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
@@ -142,12 +136,9 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation accuracy: ${evaluator.evaluate(validationPredictions)}")
   }
 
-  def runDL4J(inputDataDir: String): Unit = {
+  def runDL4J(trainingDir: String, validationDir: String): Unit = {
     val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
       spark =>
-        val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-        val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
-
         logger.info("Loading data files...")
         val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)(spark)
         val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)(spark)
@@ -188,9 +179,10 @@ object RunClassifier extends CanSpark {
     network.setListeners(new ScoreIterationListener(10))
 
     logger.info("Training neural network...")
-    0 until 30 foreach {
+    val numEpochs = 60
+    0 until numEpochs foreach {
       epoch =>
-        logger.info(s"Running epoch $epoch...")
+        if (numEpochs % 5 == 0) logger.info(s"Running epoch $epoch...")
         network.fit(trainingDataSet)
     }
 
@@ -204,10 +196,7 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats)
   }
 
-  def runDL4JSpark(inputDataDir: String)(implicit spark: SparkSession): Unit = {
-    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
-
+  def runDL4JSpark(trainingDir: String, validationDir: String)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
     val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
@@ -248,7 +237,12 @@ object RunClassifier extends CanSpark {
 
 
     logger.info("Training neural network...")
-    sparkNet.fit(trainingRDD)
+    val numEpochs = 5
+    0 until numEpochs foreach {
+      epoch =>
+        if (numEpochs % 5 == 0) logger.info(s"Running epoch $epoch...")
+        sparkNet.fit(trainingRDD)
+    }
 
 
     logger.info("Evaluating performance...")
@@ -274,15 +268,18 @@ object RunClassifier extends CanSpark {
         println(s"Running with runMode=${runMode.toString} and inputDataDir=$inputDataDir")
     }
 
+    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
+
     runMode match {
       case RunMode.PREPROCESS =>
-        withSpark() { spark => runPreprocess(inputDataDir, outputDataDir)(spark) }
+        withSpark() { spark => runPreprocess(trainingDir, validationDir, outputDataDir)(spark) }
       case RunMode.SPARKML =>
-        withSpark() { spark => runSparkML(inputDataDir)(spark) }
+        withSpark() { spark => runSparkML(trainingDir, validationDir)(spark) }
       case RunMode.DL4J =>
-        runDL4J(inputDataDir)
+        runDL4J(trainingDir, validationDir)
       case RunMode.DL4JSPARK =>
-        withSpark() { spark => runDL4JSpark(inputDataDir)(spark) }
+        withSpark() { spark => runDL4JSpark(trainingDir, validationDir)(spark) }
     }
   }
 }
