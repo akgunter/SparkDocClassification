@@ -2,12 +2,12 @@ package net.ddns.akgunter.spark_learning.document_classifier
 
 import java.nio.file.Paths
 
+import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF, VectorSlicer}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.SparkSession
-
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
@@ -16,7 +16,7 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.spark.api.RDDTrainingApproach
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
-
+import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
@@ -145,27 +145,31 @@ object RunClassifier extends CanSpark {
   }
 
   def runDL4J(inputDataDir: String): Unit = {
-    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
+    val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
+      spark =>
+        val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
+        val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
-    logger.info("Loading data files...")
-    val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
-    val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
+        logger.info("Loading data files...")
+        val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
+        val validationDataCSVSourced = dataFrameFromProcessedDirectory(validationDir)
 
-    logger.info("Creating data sets...")
-    val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
-    val validationDataSparse = sparseDFFromCSVReadyDF(validationDataCSVSourced)
+        logger.info("Creating data sets...")
+        val trainingDataSparse = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
+        val validationDataSparse = sparseDFFromCSVReadyDF(validationDataCSVSourced)
 
-    val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
-    val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
-    val numClasses = trainingDataSparse.select(csvLabelCol).distinct.count.toInt
+        val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
+        val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
+        val numClasses = trainingDataSparse.select(csvLabelCol).distinct.count.toInt
 
-    val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
-    val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
+        val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
+        val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
 
-    val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
-    val validationDataSet = dataSetFromdl4jRDD(validationRDD)
+        val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
+        val validationDataSet = dataSetFromdl4jRDD(validationRDD)
 
+        (trainingDataSet, validationDataSet, numFeatures, numClasses)
+    }
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val nnConf = new NeuralNetConfiguration.Builder()
