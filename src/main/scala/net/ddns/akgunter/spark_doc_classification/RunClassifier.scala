@@ -333,11 +333,14 @@ object RunClassifier extends CanSpark {
                    )
 
   def getOptionParser: scopt.OptionParser[Config] = {
-    new scopt.OptionParser[Config]("SparkDocClassification-OptionParser") {
+    new scopt.OptionParser[Config]("DocClassifier") {
       cmd(RunMode.PREPROCESS.toString)
         .action( (_, c) => c.copy(runMode = RunMode.PREPROCESS) )
         .text("Run the program in PREPROCESS mode")
         .children(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
           arg[String]("<outputDataDir>")
             .action( (x, c) => c.copy(outputDataDir = x) )
             .text("The file path to write preprocessed data to")
@@ -347,6 +350,9 @@ object RunClassifier extends CanSpark {
         .action( (_, c) => c.copy(runMode = RunMode.SPARKML) )
         .text("Run the program in SPARKML mode")
         .children(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
           arg[Int]("<numEpochs>")
             .action( (x, c) => c.copy(numEpochs = x) )
             .text("The number of epochs to run")
@@ -356,6 +362,9 @@ object RunClassifier extends CanSpark {
         .action( (_, c) => c.copy(runMode = RunMode.DL4J) )
         .text("Run the program in DL4J mode")
         .children(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
           arg[Int]("<numEpochs>")
             .action( (x, c) => c.copy(numEpochs = x) )
             .text("The number of epochs to run")
@@ -365,6 +374,9 @@ object RunClassifier extends CanSpark {
         .action( (_, c) => c.copy(runMode = RunMode.DL4JDEEP) )
         .text("Run the program in DL4JDEEP mode")
         .children(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
           arg[Int]("<numEpochs>")
             .action( (x, c) => c.copy(numEpochs = x) )
             .text("The number of epochs to run")
@@ -374,15 +386,9 @@ object RunClassifier extends CanSpark {
         .action( (_, c) => c.copy(runMode = RunMode.DL4JSPARK) )
         .text("Run the program in DL4JSPARK mode")
         .children(
-          arg[Int]("<numEpochs>")
-            .action( (x, c) => c.copy(numEpochs = x) )
-            .text("The number of epochs to run")
-        )
-
-      arg[String]("<inputDataDir>")
-        .action( (x, c) => c.copy(inputDataDir = x))
-        .text("The file path to the input data")
-        .children(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
           arg[Int]("<numEpochs>")
             .action( (x, c) => c.copy(numEpochs = x) )
             .text("The number of epochs to run")
