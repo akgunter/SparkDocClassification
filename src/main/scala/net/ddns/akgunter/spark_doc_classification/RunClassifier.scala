@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_learning
+package net.ddns.akgunter.spark_doc_classification
 
 import java.nio.file.Paths
 
@@ -20,11 +20,11 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
-import net.ddns.akgunter.spark_learning.spark.CanSpark
-import net.ddns.akgunter.spark_learning.sparkml_processing.{CommonElementFilter, WordCountToVec}
-import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
-import net.ddns.akgunter.spark_learning.util.DataSetUtil._
-import net.ddns.akgunter.spark_learning.util.FileUtil._
+import net.ddns.akgunter.spark_doc_classification.spark.CanSpark
+import net.ddns.akgunter.spark_doc_classification.sparkml_processing.{CommonElementFilter, WordCountToVec}
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
+import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil._
+import net.ddns.akgunter.spark_doc_classification.util.FileUtil._
 
 object RunMode extends Enumeration {
   val PREPROCESS, SPARKML, DL4J, DL4JDEEP, DL4JSPARK = Value
@@ -325,39 +325,93 @@ object RunClassifier extends CanSpark {
     logger.info(validationEval.stats)
   }
 
+  case class Config(
+                     runMode: RunMode.Value = RunMode.PREPROCESS,
+                     inputDataDir: String = "",
+                     outputDataDir: String = "",
+                     numEpochs: Int = 0
+                   )
+
+  def getOptionParser: scopt.OptionParser[Config] = {
+    new scopt.OptionParser[Config]("SparkDocClassification-OptionParser") {
+      cmd(RunMode.PREPROCESS.toString)
+        .action( (_, c) => c.copy(runMode = RunMode.PREPROCESS) )
+        .text("Run the program in PREPROCESS mode")
+        .children(
+          arg[String]("<outputDataDir>")
+            .action( (x, c) => c.copy(outputDataDir = x) )
+            .text("The file path to write preprocessed data to")
+        )
+
+      cmd(RunMode.SPARKML.toString)
+        .action( (_, c) => c.copy(runMode = RunMode.SPARKML) )
+        .text("Run the program in SPARKML mode")
+        .children(
+          arg[Int]("<numEpochs>")
+            .action( (x, c) => c.copy(numEpochs = x) )
+            .text("The number of epochs to run")
+        )
+
+      cmd(RunMode.DL4J.toString)
+        .action( (_, c) => c.copy(runMode = RunMode.DL4J) )
+        .text("Run the program in DL4J mode")
+        .children(
+          arg[Int]("<numEpochs>")
+            .action( (x, c) => c.copy(numEpochs = x) )
+            .text("The number of epochs to run")
+        )
+
+      cmd(RunMode.DL4JDEEP.toString)
+        .action( (_, c) => c.copy(runMode = RunMode.DL4JDEEP) )
+        .text("Run the program in DL4JDEEP mode")
+        .children(
+          arg[Int]("<numEpochs>")
+            .action( (x, c) => c.copy(numEpochs = x) )
+            .text("The number of epochs to run")
+        )
+
+      cmd(RunMode.DL4JSPARK.toString)
+        .action( (_, c) => c.copy(runMode = RunMode.DL4JSPARK) )
+        .text("Run the program in DL4JSPARK mode")
+        .children(
+          arg[Int]("<numEpochs>")
+            .action( (x, c) => c.copy(numEpochs = x) )
+            .text("The number of epochs to run")
+        )
+
+      arg[String]("<inputDataDir>")
+        .action( (x, c) => c.copy(inputDataDir = x))
+        .text("The file path to the input data")
+        .children(
+          arg[Int]("<numEpochs>")
+            .action( (x, c) => c.copy(numEpochs = x) )
+            .text("The number of epochs to run")
+        )
+    }
+  }
+
   def main(args: Array[String]): Unit = {
-    val runMode = RunMode.withName(args(0).toUpperCase)
-    val inputDataDir = args(1)
-    val outputDataDir = runMode match {
-      case RunMode.PREPROCESS => args(2)
-      case _ => ""
-    }
-    val numEpochs = runMode match {
-      case RunMode.PREPROCESS => 0
-      case _ => args(2).toInt
-    }
+    val parser = getOptionParser
+    parser.parse(args, Config()) match {
+      case Some(config) =>
+        val trainingDir = Paths.get(config.inputDataDir, TrainingDirName).toString
+        val validationDir = Paths.get(config.inputDataDir, ValidationDirName).toString
 
-    runMode match {
-      case RunMode.PREPROCESS =>
-        println(s"Running with runMode=${runMode.toString}, inputDataDir=$inputDataDir, and outputDataDir=$outputDataDir")
+        config.runMode match {
+          case RunMode.PREPROCESS =>
+            withSpark() { spark => runPreprocess(trainingDir, validationDir, config.outputDataDir)(spark) }
+          case RunMode.SPARKML =>
+            withSpark() { spark => runSparkML(trainingDir, validationDir, config.numEpochs)(spark) }
+          case RunMode.DL4J =>
+            runDL4J(trainingDir, validationDir, config.numEpochs)
+          case RunMode.DL4JDEEP =>
+            runDL4JDeep(trainingDir, validationDir, config.numEpochs)
+          case RunMode.DL4JSPARK =>
+            withSpark() { spark => runDL4JSpark(trainingDir, validationDir, config.numEpochs)(spark) }
+        }
       case _ =>
-        println(s"Running with runMode=${runMode.toString} and inputDataDir=$inputDataDir")
     }
 
-    val trainingDir = Paths.get(inputDataDir, TrainingDirName).toString
-    val validationDir = Paths.get(inputDataDir, ValidationDirName).toString
 
-    runMode match {
-      case RunMode.PREPROCESS =>
-        withSpark() { spark => runPreprocess(trainingDir, validationDir, outputDataDir)(spark) }
-      case RunMode.SPARKML =>
-        withSpark() { spark => runSparkML(trainingDir, validationDir, numEpochs)(spark) }
-      case RunMode.DL4J =>
-        runDL4J(trainingDir, validationDir, numEpochs)
-      case RunMode.DL4JDEEP =>
-        runDL4JDeep(trainingDir, validationDir, numEpochs)
-      case RunMode.DL4JSPARK =>
-        withSpark() { spark => runDL4JSpark(trainingDir, validationDir, numEpochs)(spark) }
-    }
   }
 }

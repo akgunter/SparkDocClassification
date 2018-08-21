@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_learning.util
+package net.ddns.akgunter.spark_doc_classification.util
 
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.SparseVector

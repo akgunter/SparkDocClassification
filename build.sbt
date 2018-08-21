@@ -3,7 +3,7 @@ val sparkVersion = "2.3.1"
 lazy val sparklearning =
   (project in file(".")).
     settings(
-      name := "SparkLearning",
+      name := "SparkDocClassification",
       organization := "net.ddns.akgunter",
       version := "0.1",
       scalaVersion := "2.11.12",
@@ -46,6 +46,7 @@ lazy val sparklearning =
           .exclude("org.codehaus.janino", "janino")
           .exclude("org.glassfish.hk2.external", "aopalliance-repackaged")
           .exclude("org.glassfish.hk2.external", "javax.inject")
-          .exclude("org.slf4j", "slf4j-log4j12")
+          .exclude("org.slf4j", "slf4j-log4j12"),
+        "com.github.scopt" %% "scopt" % "3.7.0"
       )
     )

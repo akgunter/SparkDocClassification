@@ -1,9 +1,9 @@
-package net.ddns.akgunter.spark_learning.util
+package net.ddns.akgunter.spark_doc_classification.util
 
 import java.io.File
 import java.nio.file.Paths
 
-import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 

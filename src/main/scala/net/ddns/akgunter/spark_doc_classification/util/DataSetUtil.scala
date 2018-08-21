@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_learning.util
+package net.ddns.akgunter.spark_doc_classification.util
 
 import java.util.{ArrayList => JavaArrayList}
 
@@ -13,7 +13,7 @@ import org.nd4j.linalg.dataset.DataSet
 
 import org.nd4j.linalg.factory.Nd4j
 
-import net.ddns.akgunter.spark_learning.util.DataFrameUtil._
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
 
 object DataSetUtil {
 
