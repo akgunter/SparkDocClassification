@@ -327,8 +327,8 @@ object RunClassifier extends CanSpark {
 
   case class Config(
                      runMode: RunMode.Value = RunMode.PREPROCESS,
-                     inputDataDir: String = null,
-                     outputDataDir: String = null,
+                     inputDataDir: String = "",
+                     outputDataDir: String = "",
                      numEpochs: Int = 0
                    )
 
