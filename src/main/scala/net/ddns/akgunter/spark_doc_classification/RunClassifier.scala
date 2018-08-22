@@ -94,11 +94,11 @@ object RunClassifier extends CanSpark {
   }
 
   def main(args: Array[String]): Unit = {
-    val preprocessMethods = Map(
+    val preprocessImplementations = Map(
       PreprocessMode.IDFCHI2 -> RunIDFChi2Preprocessing
     )
 
-    val classificationMethods = Map(
+    val classificationImplementations = Map(
       ClassificationMode.SPARKML -> RunSparkMLlib,
       ClassificationMode.DL4J -> RunDL4J,
       ClassificationMode.DL4JDEEP -> RunDL4JDeep,
@@ -117,12 +117,12 @@ object RunClassifier extends CanSpark {
             parser.showUsage()
           case RunMode.PREPROCESS => withSpark() {
             spark =>
-              val implementation = preprocessMethods(config.preprocessMode)
+              val implementation = preprocessImplementations(config.preprocessMode)
               implementation.run(trainingDir, validationDir, config.outputDataDir)(spark)
           }
           case RunMode.CLASSIFY => withSpark() {
             spark =>
-              val implementation = classificationMethods(config.classificationMode)
+              val implementation = classificationImplementations(config.classificationMode)
               implementation.run(trainingDir, validationDir, config.numEpochs)(spark)
           }
         }
