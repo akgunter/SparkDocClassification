@@ -33,46 +33,50 @@ object RunClassifier extends CanSpark {
 
   def getOptionParser: scopt.OptionParser[Opts] = {
     new scopt.OptionParser[Opts]("DocClassifier") {
-      val preprocessingChildArguments = Array(
-        arg[String]("<inputDataDir>")
-          .action( (x, c) => c.copy(inputDataDir = x))
-          .text("The file path to the input data"),
-        arg[String]("<outputDataDir>")
-          .action( (x, c) => c.copy(outputDataDir = x) )
-          .text("The file path to write preprocessed data to")
-      )
+      val preprocessingChildArguments: (Unit => Seq[scopt.OptionDef[_, RunClassifier.Opts]]) = {
+        Seq(
+          arg[String]("<inputDataDir>")
+            .action( (x, c) => c.copy(inputDataDir = x))
+            .text("The file path to the input data"),
+          arg[String]("<outputDataDir>")
+            .action( (x, c) => c.copy(outputDataDir = x) )
+            .text("The file path to write preprocessed data to")
+        )
+      }
       val preproccessingArguments = Array(
         cmd(PreprocessMode.IDFCHI2.toString)
           .action( (_, c) => c.copy(preprocessMode = PreprocessMode.IDFCHI2) )
           .text("Preprocess the data with the IDF and Chi2Sel transformations")
-          .children(preprocessingChildArguments: _*)
+          .children(preprocessingChildArguments(): _*)
       )
 
-      val classificationChildArguments = Array(
+      val classificationChildArguments: (Unit => Seq[scopt.OptionDef[_, RunClassifier.Opts]]) = {
+        Seq(
         arg[String]("<inputDataDir>")
           .action( (x, c) => c.copy(inputDataDir = x))
           .text("The file path to the input data"),
         arg[Int]("<numEpochs>")
           .action( (x, c) => c.copy(numEpochs = x) )
           .text("The number of epochs to run")
-      )
+        )
+      }
       val classificationArguments = Array(
         cmd(ClassificationMode.SPARKML.toString)
           .action( (_, c) => c.copy(classificationMode = ClassificationMode.SPARKML) )
           .text("Classify the data using a Spark MLlib perceptron")
-          .children(classificationChildArguments: _*),
+          .children(classificationChildArguments(): _*),
         cmd(ClassificationMode.DL4J.toString)
           .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4J) )
           .text("Classify the data using a DL4J perceptron")
-          .children(classificationChildArguments: _*),
+          .children(classificationChildArguments(): _*),
         cmd(ClassificationMode.DL4JDEEP.toString)
           .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4JDEEP) )
           .text("Classify the data using a DL4J deep neural network")
-          .children(classificationChildArguments: _*),
+          .children(classificationChildArguments(): _*),
         cmd(ClassificationMode.DL4JSPARK.toString)
           .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4JSPARK) )
           .text("Classify the data using a DL4J perceptron and Spark integration")
-          .children(classificationChildArguments: _*)
+          .children(classificationChildArguments(): _*)
       )
 
       cmd(RunMode.PREPROCESS.toString)
