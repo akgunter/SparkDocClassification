@@ -1,10 +1,7 @@
 package net.ddns.akgunter.spark_doc_classification.implementations.classification
 
-import net.ddns.akgunter.spark_doc_classification.RunClassifier.logger
-import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFFromCSVReadyDF
-import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil.dl4jRDDFromSparseDataFrame
-import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
 import org.apache.spark.sql.SparkSession
+
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
@@ -15,6 +12,11 @@ import org.deeplearning4j.spark.impl.paramavg.ParameterAveragingTrainingMaster
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
+
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFFromCSVReadyDF
+import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil.dl4jRDDFromSparseDataFrame
+import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
+
 
 /*
 Use DL4J's Spark integration to train a 2-layer neural network.

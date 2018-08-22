@@ -1,19 +1,15 @@
 package net.ddns.akgunter.spark_doc_classification.util
 
-import java.util.{ArrayList => JavaArrayList}
-
-import org.apache.spark.ml.linalg.SparseVector
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.apache.spark.api.java.JavaRDD
 
 import org.datavec.api.transform.schema.Schema
-
 import org.nd4j.linalg.dataset.DataSet
-
 import org.nd4j.linalg.factory.Nd4j
 
 import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
+
 
 object DataSetUtil {
 

@@ -4,6 +4,7 @@ import org.apache.spark.ml.PipelineStage
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.types._
 
+
 /*
 A base trait that ensures the implementing class is a PipelineStage with the parameters defined in WordVectorParams
 - Enforces common schema requirements

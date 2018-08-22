@@ -5,6 +5,7 @@ import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+
 /*
 The Model associated with the CommonElementFilter Estimator
  */

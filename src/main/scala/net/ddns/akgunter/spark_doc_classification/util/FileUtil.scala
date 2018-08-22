@@ -3,9 +3,11 @@ package net.ddns.akgunter.spark_doc_classification.util
 import java.io.File
 import java.nio.file.Paths
 
-import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil._
+
 
 object FileUtil {
   val LabelPrefix: String = "class"

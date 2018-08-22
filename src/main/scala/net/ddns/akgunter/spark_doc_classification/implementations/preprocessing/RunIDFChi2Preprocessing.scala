@@ -1,13 +1,14 @@
 package net.ddns.akgunter.spark_doc_classification.implementations.preprocessing
 import java.nio.file.Paths
 
-import net.ddns.akgunter.spark_doc_classification.RunClassifier.logger
-import net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages.{CommonElementFilter, WordCountToVec}
-import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFToCSVReadyDF
-import net.ddns.akgunter.spark_doc_classification.util.FileUtil.{TrainingDirName, ValidationDirName, dataFrameFromRawDirectory}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.{Binarizer, ChiSqSelector, IDF}
 import org.apache.spark.sql.SparkSession
+
+import net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages.{CommonElementFilter, WordCountToVec}
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFToCSVReadyDF
+import net.ddns.akgunter.spark_doc_classification.util.FileUtil.{TrainingDirName, ValidationDirName, dataFrameFromRawDirectory}
+
 
 object RunIDFChi2Preprocessing extends PreprocessingImplementation {
   override def run(trainingDir: String, validationDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {

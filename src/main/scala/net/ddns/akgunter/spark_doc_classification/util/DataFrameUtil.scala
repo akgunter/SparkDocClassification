@@ -6,6 +6,7 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
 
+
 object DataFrameUtil {
   val SchemaForRawDataFiles: StructType = new StructType()
     .add("word", StringType, nullable = false)

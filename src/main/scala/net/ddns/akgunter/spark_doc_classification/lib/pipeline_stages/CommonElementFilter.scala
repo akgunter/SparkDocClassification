@@ -1,9 +1,10 @@
 package net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages
 
-import org.apache.spark.ml.{Estimator, PipelineStage}
+import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.ml.util.Identifiable
+
 
 /*
 An Estimator that identifies and filters out words that occur in too many training samples.

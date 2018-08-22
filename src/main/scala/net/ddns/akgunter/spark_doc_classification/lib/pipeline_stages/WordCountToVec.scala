@@ -6,6 +6,7 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.types.LongType
 
+
 /*
 An Estimator which vectorizes a Bag-of-Words dataframe
 - Each word in the dictionary is assigned a column

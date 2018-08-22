@@ -1,10 +1,7 @@
 package net.ddns.akgunter.spark_doc_classification.implementations.classification
 
-import net.ddns.akgunter.spark_doc_classification.RunClassifier.logger
-import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFFromCSVReadyDF
-import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil.{dataSetFromDL4JRDD, dl4jRDDFromSparseDataFrame}
-import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
 import org.apache.spark.sql.SparkSession
+
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, OutputLayer}
@@ -14,6 +11,11 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.lossfunctions.LossFunctions
+
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.sparseDFFromCSVReadyDF
+import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil.{dataSetFromDL4JRDD, dl4jRDDFromSparseDataFrame}
+import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
+
 
 /*
 Perform classification with a 3-layer DL4J deep neural network.

@@ -1,11 +1,12 @@
 package net.ddns.akgunter.spark_doc_classification.implementations.classification
 
-import net.ddns.akgunter.spark_doc_classification.RunClassifier.logger
-import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.{SchemaForSparseDataFrames, sparseDFFromCSVReadyDF}
-import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.sql.SparkSession
+
+import net.ddns.akgunter.spark_doc_classification.util.DataFrameUtil.{SchemaForSparseDataFrames, sparseDFFromCSVReadyDF}
+import net.ddns.akgunter.spark_doc_classification.util.FileUtil.dataFrameFromProcessedDirectory
+
 
 /*
 Perform classification with a 2-layer Spark MLlib neural network.

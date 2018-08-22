@@ -8,6 +8,7 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types.{DataType, IntegerType, MapType, StructType}
 
+
 /*
 An aggregation function that merges all word indices and word counts from a document into a SparseVector
 - Requires words to have already been mapped to unique integers
