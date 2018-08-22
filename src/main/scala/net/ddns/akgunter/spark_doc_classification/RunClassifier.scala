@@ -24,12 +24,12 @@ object RunClassifier extends CanSpark {
   }
 
   case class Opts(
-                     runMode: RunMode.Value = RunMode.NOOP,
-                     preprocessMode: PreprocessMode.Value = PreprocessMode.NOOP,
-                     classificationImplementation: ClassificationMode.Value = ClassificationMode.NOOP,
-                     inputDataDir: String = "",
-                     outputDataDir: String = "",
-                     numEpochs: Int = 0
+                   runMode: RunMode.Value = RunMode.NOOP,
+                   preprocessMode: PreprocessMode.Value = PreprocessMode.NOOP,
+                   classificationMode: ClassificationMode.Value = ClassificationMode.NOOP,
+                   inputDataDir: String = "",
+                   outputDataDir: String = "",
+                   numEpochs: Int = 0
                    )
 
   def getOptionParser: scopt.OptionParser[Opts] = {
@@ -59,19 +59,19 @@ object RunClassifier extends CanSpark {
       )
       val classificationArguments = Array(
         cmd(ClassificationMode.SPARKML.toString)
-          .action( (_, c) => c.copy(classificationImplementation = ClassificationMode.SPARKML) )
+          .action( (_, c) => c.copy(classificationMode = ClassificationMode.SPARKML) )
           .text("Classify the data using a Spark MLlib perceptron")
           .children(classificationChildArguments: _*),
         cmd(ClassificationMode.DL4J.toString)
-          .action( (_, c) => c.copy(classificationImplementation = ClassificationMode.DL4J) )
+          .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4J) )
           .text("Classify the data using a DL4J perceptron")
           .children(classificationChildArguments: _*),
         cmd(ClassificationMode.DL4JDEEP.toString)
-          .action( (_, c) => c.copy(classificationImplementation = ClassificationMode.DL4JDEEP) )
+          .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4JDEEP) )
           .text("Classify the data using a DL4J deep neural network")
           .children(classificationChildArguments: _*),
         cmd(ClassificationMode.DL4JSPARK.toString)
-          .action( (_, c) => c.copy(classificationImplementation = ClassificationMode.DL4JSPARK) )
+          .action( (_, c) => c.copy(classificationMode = ClassificationMode.DL4JSPARK) )
           .text("Classify the data using a DL4J perceptron and Spark integration")
           .children(classificationChildArguments: _*)
       )
@@ -110,11 +110,13 @@ object RunClassifier extends CanSpark {
         config.runMode match {
           case RunMode.PREPROCESS => withSpark() {
             spark =>
-              val runPreprocessing = preprocessMethods(config.preprocessMode).run _
-              runPreprocessing(trainingDir, validationDir, config.outputDataDir)(spark)
+              val implementation = preprocessMethods(config.preprocessMode)
+              implementation.run(trainingDir, validationDir, config.outputDataDir)(spark)
           }
           case RunMode.CLASSIFY => withSpark() {
-
+            spark =>
+              val implementation = classificationMethods(config.classificationMode)
+              implementation.run(trainingDir, validationDir, config.numEpochs)(spark)
           }
         }
       case _ =>
