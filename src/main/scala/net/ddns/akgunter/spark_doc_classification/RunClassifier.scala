@@ -33,6 +33,9 @@ object RunClassifier extends CanSpark {
 
   def getOptionParser: scopt.OptionParser[Opts] = {
     new scopt.OptionParser[Opts]("DocClassifier") {
+      /*
+      Create a sequence of child arguments for use with a preprocessing command
+       */
       def createPreprocessingChildArguments: Seq[scopt.OptionDef[_, RunClassifier.Opts]] = {
         Seq(
           arg[String]("<inputDataDir>")
@@ -44,6 +47,9 @@ object RunClassifier extends CanSpark {
         )
       }
 
+      /*
+      Create a sequence of child arguments for use with a classification command
+       */
       def createClassificationChildArguments: Seq[scopt.OptionDef[_, RunClassifier.Opts]] = {
         Seq(
           arg[String]("<inputDataDir>")
@@ -55,14 +61,16 @@ object RunClassifier extends CanSpark {
         )
       }
 
-      val preproccessingArguments = Array(
+      // The allowed preprocessing commands
+      val preproccessingArguments = Seq(
         cmd(PreprocessMode.IDFCHI2.toString)
           .action( (_, c) => c.copy(preprocessMode = PreprocessMode.IDFCHI2) )
           .text("Preprocess the data with the IDF and Chi2Sel transformations")
           .children(createPreprocessingChildArguments: _*)
       )
 
-      val classificationArguments = Array(
+      // The allowed classification commands
+      val classificationArguments = Seq(
         cmd(ClassificationMode.SPARKML.toString)
           .action( (_, c) => c.copy(classificationMode = ClassificationMode.SPARKML) )
           .text("Classify the data using a Spark MLlib perceptron")
@@ -81,11 +89,13 @@ object RunClassifier extends CanSpark {
           .children(createClassificationChildArguments: _*)
       )
 
+      // The base run-mode command to preprocess data
       cmd(RunMode.PREPROCESS.toString)
         .action( (_, c) => c.copy(runMode = RunMode.PREPROCESS) )
         .text("Preprocess the data using the specified pipeline")
         .children(preproccessingArguments: _*)
 
+      // The base run-mode command to classify data that has been preprocessed
       cmd(RunMode.CLASSIFY.toString)
         .action( (_, c) => c.copy(runMode = RunMode.CLASSIFY) )
         .text("Classify the preprocessed data using the specified classifier")
