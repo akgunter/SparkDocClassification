@@ -120,8 +120,7 @@ object RunClassifier extends CanSpark {
               implementation.run(trainingDir, validationDir, config.numEpochs)(spark)
           }
         }
-      case None =>
-        parser.showUsageAsError()
+      case _ =>
     }
   }
 }
