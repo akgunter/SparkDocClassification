@@ -1,5 +1,8 @@
 package net.ddns.akgunter.spark_doc_classification.util
 
+import java.util.{ArrayList => JavaArrayList}
+
+import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.apache.spark.api.java.JavaRDD
