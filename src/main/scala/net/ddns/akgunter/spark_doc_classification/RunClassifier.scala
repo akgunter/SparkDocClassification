@@ -108,6 +108,8 @@ object RunClassifier extends CanSpark {
         val validationDir = Paths.get(config.inputDataDir, FileUtil.ValidationDirName).toString
 
         config.runMode match {
+          case RunMode.NOOP =>
+            parser.showUsage()
           case RunMode.PREPROCESS => withSpark() {
             spark =>
               val implementation = preprocessMethods(config.preprocessMode)
@@ -119,7 +121,8 @@ object RunClassifier extends CanSpark {
               implementation.run(trainingDir, validationDir, config.numEpochs)(spark)
           }
         }
-      case _ =>
+      case None =>
+        parser.showUsageAsError()
     }
   }
 }
