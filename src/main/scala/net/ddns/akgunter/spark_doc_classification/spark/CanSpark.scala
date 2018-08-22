@@ -3,11 +3,9 @@ package net.ddns.akgunter.spark_doc_classification.spark
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
-import org.slf4j.{Logger, LoggerFactory}
+import net.ddns.akgunter.spark_doc_classification.util.LogHelper
 
-trait CanSpark {
-
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
+trait CanSpark extends LogHelper {
 
   def withSpark[A]()(body: SparkSession => A): A = {
 
