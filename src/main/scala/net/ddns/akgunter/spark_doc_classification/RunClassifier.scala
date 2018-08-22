@@ -27,15 +27,30 @@ import net.ddns.akgunter.spark_doc_classification.util.DataSetUtil._
 import net.ddns.akgunter.spark_doc_classification.util.FileUtil._
 
 object RunMode extends Enumeration {
-  val PREPROCESS, SPARKML, DL4J, DL4JDEEP, DL4JSPARK = Value
+  val NOOP, PREPROCESS, SPARKML, DL4J, DL4JDEEP, DL4JSPARK = Value
 }
 
 object RunClassifier extends CanSpark {
+  /*
+  Preprocess the given Bag-of-Words text files.
+  Primary pipeline:
+    1. Load files and clean garbage data
+    2. Vectorize each bag of words
+    3. Discard words that are too common
+    4. Binarize the word counts
+    5. Map to TF-IDF (binarized word count makes this just IDF)
+    6. Choose top 8000 columns via Chi2 selection
+   Debugging/Alternate pipeline stages:
+    - VectorSlicer to reduce width of dictionary for fast debugging
+    - PCA operation as an alternative to Chi2
+    - Various configurations of the Chi2 operator
+   */
   def runPreprocess(trainingDir: String, validationDir: String, outputDataDir: String)(implicit spark: SparkSession): Unit = {
+
+    // Instantiate the operations
     val commonElementFilter = new CommonElementFilter()
       .setDropFreq(0.1)
     val wordVectorizer = new WordCountToVec()
-
     val rawWordVectorColParam = wordVectorizer.getParam("vectorCol")
     val rawWordVectorCol = wordVectorizer.getOrDefault(rawWordVectorColParam).asInstanceOf[String]
     val vectorSlicer = new VectorSlicer()
@@ -56,6 +71,7 @@ object RunClassifier extends CanSpark {
       .setOutputCol("chi_sel_features")
       .setNumTopFeatures(8000)
 
+    // Construct the pipeline
     val preprocStages = Array(commonElementFilter, wordVectorizer, binarizer, idf, chiSel)
     val preprocPipeline = new Pipeline().setStages(preprocStages)
 
@@ -73,6 +89,7 @@ object RunClassifier extends CanSpark {
     val validationDataSparse = preprocModel.transform(validationData)
 
 
+    // Get important columns programmatically, in case of reconfiguration
     val lastStage = preprocPipeline.getStages.last
     val pipeFeaturesColParam = lastStage.getParam("outputCol")
     val pipeFeaturesCol = lastStage.getOrDefault(pipeFeaturesColParam).asInstanceOf[String]
@@ -96,6 +113,9 @@ object RunClassifier extends CanSpark {
     .csv(validationDataFilePath)
   }
 
+  /*
+  Perform classification with a 2-layer Spark MLlib neural network.
+   */
   def runSparkML(trainingDir: String, validationDir: String, numEpochs: Int)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
@@ -106,10 +126,10 @@ object RunClassifier extends CanSpark {
     val trainingData = sparseDFFromCSVReadyDF(trainingDataCSVSourced)
     val validationData = sparseDFFromCSVReadyDF(validationDataCSVSourced)
 
-
     val Array(csvNumFeaturesCol, _, _, csvLabelCol) = trainingDataCSVSourced.columns
     val numFeatures = trainingDataCSVSourced.head.getAs[Int](csvNumFeaturesCol)
     val numClasses = trainingData.select(csvLabelCol).distinct.count.toInt
+
 
     logger.info(s"Configuring neural net with $numFeatures features and $numClasses classes...")
     val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
@@ -149,7 +169,14 @@ object RunClassifier extends CanSpark {
     logger.info(s"Validation F1: ${f1Evaluator.evaluate(validationPredictions)}")
   }
 
+  /*
+  Perform classification with a 2-layer DL4J neural network.
+  - Explicitly uses Spark to load the data sets but otherwise lets DL4J manage training
+    and processing internally.
+   */
   def runDL4J(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
+
+    // Use Spark to load the data sets
     val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
       spark =>
         logger.info("Loading data files...")
@@ -167,8 +194,8 @@ object RunClassifier extends CanSpark {
         val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
         val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
 
-        val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
-        val validationDataSet = dataSetFromdl4jRDD(validationRDD)
+        val trainingDataSet = dataSetFromDL4JRDD(trainingRDD)
+        val validationDataSet = dataSetFromDL4JRDD(validationRDD)
 
         (trainingDataSet, validationDataSet, numFeatures, numClasses)
     }
@@ -208,7 +235,14 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats)
   }
 
+  /*
+  Perform classification with a 3-layer DL4J deep neural network.
+  - Explicitly uses Spark to load the data sets but otherwise lets DL4J manage training
+    and processing internally.
+   */
   def runDL4JDeep(trainingDir: String, validationDir: String, numEpochs: Int): Unit = {
+
+    // Use Spark to load the data sets
     val (trainingDataSet, validationDataSet, numFeatures, numClasses) = withSpark() {
       spark =>
         logger.info("Loading data files...")
@@ -226,8 +260,8 @@ object RunClassifier extends CanSpark {
         val trainingRDD = dl4jRDDFromSparseDataFrame(trainingDataSparse, numClasses)
         val validationRDD = dl4jRDDFromSparseDataFrame(validationDataSparse, numClasses)
 
-        val trainingDataSet = dataSetFromdl4jRDD(trainingRDD)
-        val validationDataSet = dataSetFromdl4jRDD(validationRDD)
+        val trainingDataSet = dataSetFromDL4JRDD(trainingRDD)
+        val validationDataSet = dataSetFromDL4JRDD(validationRDD)
 
         (trainingDataSet, validationDataSet, numFeatures, numClasses)
     }
@@ -269,6 +303,9 @@ object RunClassifier extends CanSpark {
     logger.info(eval.stats)
   }
 
+  /*
+  Use DL4J's Spark integration to train a 2-layer neural network.
+   */
   def runDL4JSpark(trainingDir: String, validationDir: String, numEpochs: Int)(implicit spark: SparkSession): Unit = {
     logger.info("Loading data files...")
     val trainingDataCSVSourced = dataFrameFromProcessedDirectory(trainingDir)
@@ -326,7 +363,7 @@ object RunClassifier extends CanSpark {
   }
 
   case class Config(
-                     runMode: RunMode.Value = RunMode.PREPROCESS,
+                     runMode: RunMode.Value = RunMode.NOOP,
                      inputDataDir: String = "",
                      outputDataDir: String = "",
                      numEpochs: Int = 0
@@ -334,6 +371,8 @@ object RunClassifier extends CanSpark {
 
   def getOptionParser: scopt.OptionParser[Config] = {
     new scopt.OptionParser[Config]("DocClassifier") {
+      // TODO: Add NOOP case
+
       cmd(RunMode.PREPROCESS.toString)
         .action( (_, c) => c.copy(runMode = RunMode.PREPROCESS) )
         .text("Run the program in PREPROCESS mode")
@@ -346,53 +385,34 @@ object RunClassifier extends CanSpark {
             .text("The file path to write preprocessed data to")
         )
 
+      val learningChildArguments = Array(
+        arg[String]("<inputDataDir>")
+          .action( (x, c) => c.copy(inputDataDir = x))
+          .text("The file path to the input data"),
+        arg[Int]("<numEpochs>")
+          .action( (x, c) => c.copy(numEpochs = x) )
+          .text("The number of epochs to run")
+      )
+
       cmd(RunMode.SPARKML.toString)
         .action( (_, c) => c.copy(runMode = RunMode.SPARKML) )
         .text("Run the program in SPARKML mode")
-        .children(
-          arg[String]("<inputDataDir>")
-            .action( (x, c) => c.copy(inputDataDir = x))
-            .text("The file path to the input data"),
-          arg[Int]("<numEpochs>")
-            .action( (x, c) => c.copy(numEpochs = x) )
-            .text("The number of epochs to run")
-        )
+        .children(learningChildArguments: _*)
 
       cmd(RunMode.DL4J.toString)
         .action( (_, c) => c.copy(runMode = RunMode.DL4J) )
         .text("Run the program in DL4J mode")
-        .children(
-          arg[String]("<inputDataDir>")
-            .action( (x, c) => c.copy(inputDataDir = x))
-            .text("The file path to the input data"),
-          arg[Int]("<numEpochs>")
-            .action( (x, c) => c.copy(numEpochs = x) )
-            .text("The number of epochs to run")
-        )
+        .children(learningChildArguments: _*)
 
       cmd(RunMode.DL4JDEEP.toString)
         .action( (_, c) => c.copy(runMode = RunMode.DL4JDEEP) )
         .text("Run the program in DL4JDEEP mode")
-        .children(
-          arg[String]("<inputDataDir>")
-            .action( (x, c) => c.copy(inputDataDir = x))
-            .text("The file path to the input data"),
-          arg[Int]("<numEpochs>")
-            .action( (x, c) => c.copy(numEpochs = x) )
-            .text("The number of epochs to run")
-        )
+        .children(learningChildArguments: _*)
 
       cmd(RunMode.DL4JSPARK.toString)
         .action( (_, c) => c.copy(runMode = RunMode.DL4JSPARK) )
         .text("Run the program in DL4JSPARK mode")
-        .children(
-          arg[String]("<inputDataDir>")
-            .action( (x, c) => c.copy(inputDataDir = x))
-            .text("The file path to the input data"),
-          arg[Int]("<numEpochs>")
-            .action( (x, c) => c.copy(numEpochs = x) )
-            .text("The number of epochs to run")
-        )
+        .children(learningChildArguments: _*)
     }
   }
 
@@ -417,7 +437,5 @@ object RunClassifier extends CanSpark {
         }
       case _ =>
     }
-
-
   }
 }

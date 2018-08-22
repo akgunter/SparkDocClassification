@@ -5,6 +5,9 @@ import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.ml.util.Identifiable
 
+/*
+An Estimator that identifies and filters out words that occur in too many training samples.
+ */
 class CommonElementFilter(override val uid: String)
   extends Estimator[CommonElementFilterModel]
     with WordVectorPipelineStage {

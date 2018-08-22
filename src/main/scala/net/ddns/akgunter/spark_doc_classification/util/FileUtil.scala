@@ -75,6 +75,11 @@ object FileUtil {
       .sum
   }
 
+  /*
+  Load the raw Bag-of-Words files, dropping garbage rows
+  - Uses the SchemaForRawDataFiles schema
+  - Adds a label column if this is loading training or validation data
+   */
   def dataFrameFromRawDirectory(baseDirPath: String, isLabelled: Boolean)(implicit spark: SparkSession): DataFrame = {
     val dirPattern = {
       if (isLabelled)
@@ -108,6 +113,10 @@ object FileUtil {
       .withColumn(labelCol, getLabel(col(labelStrCol)))
   }
 
+  /*
+  Load preprocessed files into a dataframe
+  - Uses the SchemaForProcDataFiles schema
+   */
   def dataFrameFromProcessedDirectory(baseDirPath: String)(implicit spark: SparkSession): DataFrame = {
     val baseDirPattern = createCSVDirectoryPattern(baseDirPath)
 

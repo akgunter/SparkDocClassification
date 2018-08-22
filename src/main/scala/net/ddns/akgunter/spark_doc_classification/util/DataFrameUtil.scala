@@ -22,6 +22,10 @@ object DataFrameUtil {
     .add("label", IntegerType, nullable = true)
 
 
+  /*
+  Convert a dataframe of sparse features to a dataframe that can be written to CSV
+  - converts SchemaForSparseDataFrames to SchemaForProcDataFiles
+   */
   def sparseDFToCSVReadyDF(sparseDF: DataFrame, sparseFeaturesCol: String, sparseLabelsCol: String): DataFrame = {
     val getSparseIndices = udf {
       v: SparseVector =>
@@ -43,6 +47,10 @@ object DataFrameUtil {
     )
   }
 
+  /*
+  Load a dataframe of sparse features from a dataframe sourced directly from a CSV
+  - converts SchemaForProcDataFiles to SchemaForSparseDataFrames
+   */
   def sparseDFFromCSVReadyDF(csvReadyDF: DataFrame): DataFrame = {
     val Array(sparseFeaturesCol, sparseLabelsCol) = SchemaForSparseDataFrames.fieldNames
     val Array(numFeaturesCol, wordIndicesCol, wordCountsCol, labelCol) = csvReadyDF.columns

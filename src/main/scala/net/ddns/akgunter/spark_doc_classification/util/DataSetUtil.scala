@@ -48,7 +48,10 @@ object DataSetUtil {
     }.toJavaRDD
   }
 
-  def dataSetFromdl4jRDD(dl4jRDD: JavaRDD[DataSet]): DataSet = {
+  /*
+  Merge an RDD of DL4J DataSets into a single DataSet
+   */
+  def dataSetFromDL4JRDD(dl4jRDD: JavaRDD[DataSet]): DataSet = {
     DataSet.merge(new JavaArrayList(dl4jRDD.collect))
   }
 }

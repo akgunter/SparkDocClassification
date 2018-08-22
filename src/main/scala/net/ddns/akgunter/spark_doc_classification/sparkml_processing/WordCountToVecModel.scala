@@ -6,6 +6,9 @@ import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{Column, DataFrame, Dataset}
 
 
+/*
+The Model associated with the WordCountToVec Estimator
+ */
 class WordCountToVecModel protected (
                                       protected val dictionary: DataFrame,
                                       protected val dictionarySize: Long,

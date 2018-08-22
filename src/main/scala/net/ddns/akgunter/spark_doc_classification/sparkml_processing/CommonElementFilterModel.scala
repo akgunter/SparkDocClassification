@@ -5,6 +5,9 @@ import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+/*
+The Model associated with the CommonElementFilter Estimator
+ */
 class CommonElementFilterModel protected (
    protected val wordsToKeep: DataFrame,
    override val uid: String)
