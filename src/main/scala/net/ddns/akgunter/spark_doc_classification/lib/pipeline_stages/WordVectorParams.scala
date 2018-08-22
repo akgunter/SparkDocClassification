@@ -1,9 +1,12 @@
-package net.ddns.akgunter.spark_doc_classification.sparkml_processing
+package net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages
 
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.param.{Param, Params}
 import org.apache.spark.sql.types.{IntegerType, StringType, DataType}
 
+/*
+Standardized parameters common to the data preprocessing pipeline
+ */
 trait WordVectorParams extends Params {
   final val fileCol = new Param[String](this, "fileCol", "The input file column")
   final val wordCol = new Param[String](this, "wordCol", "The input word column")
@@ -20,6 +23,9 @@ trait WordVectorParams extends Params {
   setDefault(vectorCol, "raw_word_vector")
 }
 
+/*
+A lookup table mapping parameters to their column types
+ */
 object WordVectorParams {
   final val COLUMN_TYPES = Map(
     "fileCol" -> StringType,

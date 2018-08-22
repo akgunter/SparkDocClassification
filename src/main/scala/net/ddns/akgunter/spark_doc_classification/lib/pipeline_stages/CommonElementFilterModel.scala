@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_doc_classification.sparkml_processing
+package net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages
 
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.param.{Param, ParamMap}
@@ -20,7 +20,7 @@ class CommonElementFilterModel protected (
   )
   override protected val requiredOutputColumns: Set[Param[String]] = Set()
 
-  protected[sparkml_processing] def this(wordsToKeep: DataFrame) = {
+  protected[pipeline_stages] def this(wordsToKeep: DataFrame) = {
     this(wordsToKeep, Identifiable.randomUID("CommonElementFilterModel"))
   }
 

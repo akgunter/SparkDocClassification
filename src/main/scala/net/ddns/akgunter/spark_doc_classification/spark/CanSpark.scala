@@ -7,11 +7,8 @@ CanSpark trait authored by Wil Adamec (https://github.com/wiladamec) and used wi
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
-import org.slf4j.{Logger, LoggerFactory}
 
-trait CanSpark {
-
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
+trait CanSpark extends CanLog {
 
   def withSpark[A]()(body: SparkSession => A): A = {
 

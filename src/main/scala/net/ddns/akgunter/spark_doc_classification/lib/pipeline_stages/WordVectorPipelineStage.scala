@@ -1,9 +1,13 @@
-package net.ddns.akgunter.spark_doc_classification.sparkml_processing
+package net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages
 
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.ml.param.Param
 import org.apache.spark.sql.types._
 
+/*
+A base trait that ensures the implementing class is a PipelineStage with the parameters defined in WordVectorParams
+- Enforces common schema requirements
+ */
 trait WordVectorPipelineStage extends PipelineStage with WordVectorParams {
 
   protected val requiredInputColumns: Set[Param[String]]

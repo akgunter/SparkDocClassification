@@ -1,4 +1,4 @@
-package net.ddns.akgunter.spark_doc_classification.sparkml_processing
+package net.ddns.akgunter.spark_doc_classification.lib.pipeline_stages
 
 import org.apache.spark.ml.{Estimator, PipelineStage}
 import org.apache.spark.ml.param.{Param, ParamMap}
